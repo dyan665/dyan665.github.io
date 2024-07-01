@@ -38,13 +38,16 @@ private:
 ## EventLoop类
 > 核心外部类，主要作用就是`1.调用事件分离器等待就绪事件；2.分发就绪事件给相应的事件处理器；3.调用处理器中的回调函数；4.处理其它任务队列中急需处理的任务以及超时事件；5.重复上述过程`。其作为各类的核心组件，管理着他们的生命周期，包括创建、删除时间分离器`Pooler`，创建、删除定时器队列`TimerQueue`，
 
+
+
+
 ### 线程委托
 
 
 
 
 ## Channel类
-> 内部类，对`描述符fd`以及对应可读、可写、错误、关闭时的回调函数的封装。同时保存有EventLoop对象指针，通过该指针来将`fd`注册进Pooler中监听事件。
+> 内部类，目前仅提供给`Acceptor`、`Connector`、`EventLoop`、`TcpConnection`使用，对`描述符fd`以及对应可读、可写、错误、关闭时的回调函数的封装。同时保存有EventLoop对象指针，通过该指针来将`fd`注册进Pooler中监听事件。
 
 ```cpp
 class EventLoop;
@@ -135,13 +138,46 @@ private:
 ## Accepter类
 > 对`server端`需要用到的接口进行的封装，主要是`创建socket`、`设置socket属性(比如地址、端口重用)`、`监听listen`、`接受连接accept`，其中accept接口则是包装为一个`Channel`对象，从而注册到`EventLoop`核心对象的Poller中进行事件监听。同时Accepter中保存有`newConnectionCallBack`回调函数，此函数是由`TcpServer`设置，目的是将新连接的文件描述符包装为`TcpConnection`保存在`TcpServer`中进行管理，包括设置读取到数据后的回调函数`messageCallback`、写数据完成时的回调函数`writeCompleteCallBack`、连接关闭时的回调函数`closeCallBack`、高水位线回调函数`highwaterCallBack`、低水位线回调函数`lowwaterCallBack`。
 
-## Connector类
+## 连接器Connector类
+> 内部类，作为客户端的连接器，负责创建socket、设置socket非阻塞等属性，以及最重要的调用`connect`接口连接服务器。
+
+```cpp
+class EventLoop;
+class InetAddress;
+
+class Connector: noncopyable
+{
+public:
+    Connector(EventLoop* loop, const InetAddress& peer);
+    ~Connector();
+
+    void start();
+
+    void setNewConnectionCallback(const NewConnectionCallback& cb)
+    { newConnectionCallback_ = cb; }
+
+    void setErrorCallback(const ErrorCallback& cb)
+    { errorCallback_ = cb; }
+
+private:
+    void handleWrite();
+
+    EventLoop* loop_;
+    const InetAddress peer_;
+    const int sockfd_;
+    bool connected_;
+    bool started_;
+    Channel channel_;
+    NewConnectionCallback newConnectionCallback_;
+    ErrorCallback errorCallback_;
+};
+```
 
 
 ## TcpServer类
-
+> 
 
 ## TcpLcient类
-
+> ，同时包括重试等机制
 
 
