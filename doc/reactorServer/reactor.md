@@ -9,7 +9,7 @@
 ![reactor](./reactor.png)
 
 ## Pooler类（事件分离器）
-> 内部类，主要是对select、pool、epoll这几种IO复用模型接口的封装，主要功能包括保存关注的事件列表(使得能够通过`描述符fd`获取到对应的channel对象,可通过`map`实现或者通过类似`epoll_event`内保存的用户数据指针实现均可)、将事件通过接口`epoll_ctl`进行增删改、通过接口`epoll_wait`进行阻塞式等待事件到来或者超时返回。
+> 内部类，只用于EventLoop类中，主要是对select、pool、epoll这几种IO复用模型接口的封装，主要功能包括保存关注的事件列表(使得能够通过`描述符fd`获取到对应的channel对象,可通过`map`实现或者通过类似`epoll_event`内保存的用户数据指针实现均可)、将事件通过接口`epoll_ctl`进行增删改、通过接口`epoll_wait`进行阻塞式等待事件到来或者超时返回。
 
 ```cpp
 class EventLoop;
@@ -36,10 +36,62 @@ private:
 ```
 
 ## EventLoop类
-> 核心外部类，主要作用就是`1.调用事件分离器等待就绪事件；2.分发就绪事件给相应的事件处理器；3.调用处理器中的回调函数；4.处理其它任务队列中急需处理的任务以及超时事件；5.重复上述过程`。其作为各类的核心组件，管理着他们的生命周期，包括创建、删除时间分离器`Pooler`，创建、删除定时器队列`TimerQueue`，
+> 核心外部类，主要作用就是`1.调用事件分离器等待就绪事件；2.分发就绪事件给相应的事件处理器；3.调用处理器中的回调函数；4.处理其它任务队列中急需处理的任务以及超时事件；5.重复上述过程`。其作为核心功能组件，管理着部分对象的生命周期：包括创建、删除时间分离器`Pooler`，用于监听IO事件；创建、删除定时器队列`TimerQueue`，用于创建定时任务或者周期任务；管理同步队列以及提供唤醒功能，用于处理需立即处理的任务或者存放委托任务。除此之外，EventLoop类还以指针的形式提供给其它类使用，目的主要为判断是否为主loop线程。
 
+```cpp
+class EventLoop: noncopyable
+{
+public:
 
+    EventLoop();
+    ~EventLoop();
 
+    void loop(); // 事件分离器
+    void quit(); // thread safe
+
+    // 任务委托
+    void runInLoop(const Task& task);
+    void runInLoop(Task&& task);
+    void queueInLoop(const Task& task);
+    void queueInLoop(Task&& task);
+
+    // 定时任务与周期任务 返回定时器指针由创建任务的对象负责取消任务 保证Timer的生命周期由同一对象管理
+    Timer* runAt(Timestamp when, TimerCallback callback);
+    Timer* runAfter(Nanosecond interval, TimerCallback callback);
+    Timer* runEvery(Nanosecond interval, TimerCallback callback);
+    void cancelTimer(Timer* timer);
+
+    // 唤醒
+    void wakeup();
+
+    // IO事件注册接口
+    void updateChannel(Channel* channel);
+    void removeChannel(Channel* channel);
+
+    // 多线程下的主loop线程的区分
+    void assertInLoopThread();
+    void assertNotInLoopThread();
+    bool isInLoopThread();
+
+private:
+    void doPendingTasks();
+    void handleRead();
+    const pid_t tid_;
+    std::atomic_bool quit_;
+    bool doingPendingTasks_;
+    EPoller poller_;
+    EPoller::ChannelList activeChannels_;
+    const int wakeupFd_;
+    Channel wakeupChannel_;
+    std::mutex mutex_;
+    std::vector<Task> pendingTasks_; // guarded by mutex_
+    TimerQueue timerQueue_;
+};
+
+```
+
+### loop接口
+> 
 
 ### 线程委托
 
@@ -126,7 +178,10 @@ private:
 
 ## 定时器Timer类
 
+
+
 ## 定时器队列TimerQueue类
+
 
 
 ## Buffer类
