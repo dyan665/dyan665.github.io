@@ -362,7 +362,7 @@ void TimerQueue::handleRead()
 >timerfd_settime(fd, 0, &newtime, &oldtime)
 
 ## Buffer类
->
+> `Buffer`主要用于消息的缓存，其中使用`vector<char>`作为缓冲区，采用读写下标的方式记录缓存可读可写区域。
 
 ## TcpConnection类
 
