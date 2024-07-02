@@ -396,10 +396,10 @@ private:
 
     EventLoop* loop_;
     const InetAddress peer_;
-    const int sockfd_;
+    const int sockfd_; // socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0)
     bool connected_;
     bool started_;
-    Channel channel_;
+    Channel channel_; // 用于非阻塞时客户端fd还在连接中时，此时使用事件分离器监控连接是否完成
     NewConnectionCallback newConnectionCallback_;
     ErrorCallback errorCallback_;
 };
