@@ -91,12 +91,67 @@ private:
 ```
 
 ### loop接口
-> 
+> 主要作用为，调用事件分离器，等待就绪事件到来，在返回后，依次调用就绪`channel`中定义的事件处理回调函数，处理完成就绪事件后，再处理委托保存的任务。注意，其中的定时任务队列，是通过`timerfd`的形式提供，也就是作为一个`描述符`的形式提供，在等待时间到达后，该描述符就会变为就绪态，时间分离器也就会返回，然后调用对应的`timerfd`对应的任务函数。
 
-### 线程委托
+```cpp
+void EventLoop::loop()
+{
+    assertInLoopThread();
+    TRACE("EventLoop %p polling", this);
+    quit_ = false;
+    while (!quit_) {
+        activeChannels_.clear();
+        poller_.poll(activeChannels_);
+        for (auto channel: activeChannels_)
+            channel->handleEvents();
+        doPendingTasks();
+    }
+    TRACE("EventLoop %p quit", this);
+}
+```
 
+### 任务委托接口
+> 任务委托主要是runInLoop接口和queueInLoop接口。对于runInLoop接口，若调用者为主循环线程，则直接调用任务，若为其它线程，则通过queueInLoop接口将任务保存到任务队列，并且唤醒主循环线程去处理。queueInLoop接口则只简单将任务保存到任务队列并唤醒即可。
 
+```cpp
+void EventLoop::runInLoop(Task&& task)
+{
+    if (isInLoopThread())
+        task();
+    else
+        queueInLoop(std::move(task));
+}
+void EventLoop::queueInLoop(Task& task)
+{
+    {
+        std::lock_guard<std::mutex> guard(mutex_);
+        pendingTasks_.push_back(std::move(task));
+    }
+    wakeup();
+}
+```
 
+### 定时任务相关的接口
+> 定时任务主要为四个接口，`runAt`为在指定时刻触发一次，`runAfter`则为在当前时刻之后固定时间后触发一次，`runEvery`则为当前时刻之后周期触发，`cancelTimer`则为取消定时器。这四种接口，均简单调用`TimerQueue类`的`addTimer`接口，关于定时器的封装逻辑，均处于`TimerQueue类`中，基本逻辑为，`TimerQueue`中通过创建`Timerfd`，将该`Timerfd`注册进时间分离器中，借此进行定时，当定时到达时，事件分离器返回，就会调用`TimerQueue`中指定的回调函数，在`TimerQueue`回调函数中则检测超时事件并处理，然后再次设置`Timerfd`的超时时刻，等待下一次超时时事件分离器返回。
+
+```cpp
+Timer* EventLoop::runAt(Timestamp when, TimerCallback callback)
+{
+    return timerQueue_.addTimer(std::move(callback), when, Millisecond::zero());
+}
+
+Timer* EventLoop::runAfter(Nanosecond interval, TimerCallback callback)
+{
+    return runAt(clock::now() + interval, std::move(callback));
+}
+
+Timer* EventLoop::runEvery(Nanosecond interval, TimerCallback callback)
+{
+    return timerQueue_.addTimer(std::move(callback),
+                                clock::now() + interval,
+                                interval);
+}
+```
 
 ## Channel类
 > 内部类，目前仅提供给`Acceptor`、`Connector`、`EventLoop`、`TcpConnection`使用，对`描述符fd`以及对应可读、可写、错误、关闭时的回调函数的封装。同时保存有EventLoop对象指针，通过该指针来将`fd`注册进Pooler中监听事件。
@@ -177,12 +232,134 @@ private:
 ```
 
 ## 定时器Timer类
+> `Timer类`主要保存的是定时器的时间、对应的超时回调函数以及一些状态信息，接口信息则如下。
 
+```cpp
+class Timer: noncopyable
+{
+public:
+    Timer(TimerCallback callback, Timestamp when, Nanosecond interval)
+            : callback_(std::move(callback)),
+              when_(when),
+              interval_(interval),
+              repeat_(interval_ > Nanosecond::zero()),
+              canceled_(false)
+    {
+    }
 
+    void run() { if (callback_) callback_(); }
+    bool repeat() const { return repeat_; }
+    bool expired(Timestamp now) const { return now >= when_; }
+    Timestamp when() const { return when_; }
+    void restart()
+    {
+        assert(repeat_);
+        when_ += interval_;
+    }
+    void cancel()
+    {
+        assert(!canceled_);
+        canceled_ = true;
+    }
+    bool canceled() const { return canceled_; }
+
+private:
+    TimerCallback callback_;
+    Timestamp when_;
+    const Nanosecond interval_;
+    bool repeat_;
+    bool canceled_;
+};
+```
 
 ## 定时器队列TimerQueue类
+> `TimerQueue类`主要的功能就是存储`Timer`，根据每个`Timer`的超时时刻进行排序，然后通过`Timerfd`设置对应的最短的超时时间，并且将`Timerfd`注册进事件分离器中，对应的事件处理函数则负责检测队列中的超时事件以及调用对应的超时回调函数，在处理完成后，则继续通过`Timerfd`设置下一个最短的超时时间。
 
+```cpp
+class TimerQueue: noncopyable
+{
+public:
+    explicit
+    TimerQueue(EventLoop* loop);
+    ~TimerQueue();
 
+    Timer* addTimer(TimerCallback cb, Timestamp when, Nanosecond interval);
+    void cancelTimer(Timer* timer);
+
+private:
+    typedef std::pair<Timestamp, Timer*> Entry;
+    typedef std::set<Entry> TimerList;
+
+    void handleRead();
+    std::vector<Entry> getExpired(Timestamp now);
+
+private:
+    EventLoop* loop_;
+    const int timerfd_;
+    Channel timerChannel_;
+    TimerList timers_;
+};
+```
+
+注册Timerfd到事件分离器中：
+```cpp
+TimerQueue::TimerQueue(EventLoop *loop)
+        : loop_(loop),
+          timerfd_(timerfdCreate()),
+          timerChannel_(loop, timerfd_)
+{
+    loop_->assertInLoopThread();
+    timerChannel_.setReadCallback([this](){handleRead();});
+    timerChannel_.enableRead();
+}
+```
+
+添加定时器任务：
+```cpp
+Timer* TimerQueue::addTimer(TimerCallback cb, Timestamp when, Nanosecond interval)
+{
+    Timer* timer = new Timer(std::move(cb), when, interval);
+    loop_->runInLoop([=](){
+        auto ret = timers_.insert({when, timer});
+        assert(ret.second);
+
+        if (timers_.begin() == ret.first)
+            timerfdSet(timerfd_, when);
+    });
+    return timer;
+}
+```
+
+`TimerQueue`的事件处理函数：
+```cpp
+void TimerQueue::handleRead()
+{
+    loop_->assertInLoopThread();
+    timerfdRead(timerfd_);
+
+    Timestamp now(clock::now());
+    for (auto& e: getExpired(now)) {
+        Timer* timer = e.second;
+        assert(timer->expired(now));
+
+        if (!timer->canceled())
+            timer->run();
+        if (!timer->canceled() && timer->repeat()) {
+            timer->restart();
+            e.first = timer->when();
+            timers_.insert(e);
+        }
+        else delete timer;
+    }
+
+    if (!timers_.empty())
+        timerfdSet(timerfd_, timers_.begin()->first);
+}
+```
+
+### Timerfd相关的API
+>timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC)
+>timerfd_settime(fd, 0, &newtime, &oldtime)
 
 ## Buffer类
 >
