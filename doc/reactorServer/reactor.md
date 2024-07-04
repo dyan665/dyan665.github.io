@@ -565,7 +565,7 @@ private:
 
 ## TcpLcient类
 >外部类，相比于`TcpServer`类，`TcpClient`类额外提供一个错误发生时的回调函数，主要用于连接发生错误时调用。
-> 同时包括重试等机制
+> 同时包括重试机制，主要实现方式为定时器，当连接建立后调用回调函数时，则会删除对应的重试定时器。
 
 ```cpp
 class TcpClient: noncopyable
