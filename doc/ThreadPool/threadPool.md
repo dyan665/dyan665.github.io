@@ -95,21 +95,36 @@ class ThreadWorker{
 ```
 
 ## 任务提交接口
-> 任务提交接口的参数需要包括`普通函数`、`lambda函数`、`function对象`，因此需要基于模板实现。除此之外，为了包含不固定个数的参数，需要使用可变模板参数，使用完美转发传递左右值，
-
-
+> 任务提交接口的参数需要包括`普通函数`、`lambda函数`、`function对象`，因此需要基于模板实现。除此之外，为了包含不固定个数的参数，需要使用可变模板参数，同时使用完美转发传递左右值引用。
+- 尾返回类型推导：在尾部通过`decltype`推导返回值结果，返回值处使用`auto`，无法将`decltype`前置推导的原因是，当前置时，参数`f`以及`args`还未定义，因此需要尾置进行推导。`future`则为标准库提供的同步方式，其通过`wait`方法提供屏障，阻塞线程，实现线程的同步，最终可通过`get`方法获取最终的结果。`Args&&...`则是万能引用加参数包，`forward<Args>(args)...`则是完美转发加参数展开。
+```cpp
+auto submit(Fn && f, Args&&... args) -> future<decltype(f(forward<Args>(args)...))> {
+    ...
+}
+```
+- 首先使用`bind`绑定函数与其对应的参数为无参`function`对象，然后通过`packaged_task`将其包装为异步提供返回值的`task`，由于`packaged_task`对象只能转移，当该函数结束时，会自动销毁`packaged_task`对象，为了保持当该任务提交函数返回后`packaged_task`对象仍存活，需要将其包装进`shared_ptr`中，然后通过再次包装为`function`提交到任务队列。
+```cpp
+function<decltype(f(args...))()> func = bind(forward<Fn>(f),forward<Args>(args)...); // 绑定参数 使得无参数 packaged_task无法同时绑定参数
+shared_ptr<packaged_task<decltype(f(args...))()>> task_ptr = make_shared<packaged_task<decltype(f(args...))()>>(func); // 通过packaged_task异步返回结果，通过move或者shared_ptr保证其生命周期正确
+//packaged_task<void()> task(func);
+function<void()> tmp = [task_ptr](){//用auto 推导出的为右值   // 包装为function  方便放进任务队列  共享packaged_task
+    (*task_ptr)();
+};
+```
+- 利用条件变量唤醒线程消费任务
+- 
 
 ```cpp
 template<class Fn, class... Args>
 auto submit(Fn && f, Args&&... args) -> future<decltype(f(forward<Args>(args)...))> {
     //method 1
-    function<decltype(f(args...))()> func = bind(forward<Fn>(f),forward<Args>(args)...);
-    
-    shared_ptr<packaged_task<decltype(f(args...))()>> task_ptr = make_shared<packaged_task<decltype(f(args...))()>>(func);
+   function<decltype(f(args...))()> func = bind(forward<Fn>(f),forward<Args>(args)...); // 绑定参数 使得无参数 packaged_task无法同时绑定参数
+
+    shared_ptr<packaged_task<decltype(f(args...))()>> task_ptr = make_shared<packaged_task<decltype(f(args...))()>>(func); // 通过packaged_task异步返回结果，通过move或者shared_ptr保证其生命周期正确
     //packaged_task<void()> task(func);
-    function<void()> tmp = [task_ptr](){//用auto 推导出的为右值
+    function<void()> tmp = [task_ptr](){//用auto 推导出的为右值   // 包装为function  方便放进任务队列  共享packaged_task
         (*task_ptr)();
-    }; 
+    };
     q.enqueue((tmp));
     cout<<"thread pool enqueue one task"<<flush<<endl;
     cv.notify_one();
