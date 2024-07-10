@@ -111,8 +111,7 @@ function<void()> tmp = [task_ptr](){//用auto 推导出的为右值   // 包装�
     (*task_ptr)();
 };
 ```
-- 利用条件变量唤醒线程消费任务
-- 
+- 对于任务队列，工作线程会通过线程池对象中的`condition_variable`进行同步等待，当任务队列为空的时候，工作线程则阻塞挂起，因此当通过任务提交接口提交任务后，需要使用`notify_one`唤醒阻塞挂起的工作线程来消费任务。
 
 ```cpp
 template<class Fn, class... Args>
@@ -127,12 +126,11 @@ auto submit(Fn && f, Args&&... args) -> future<decltype(f(forward<Args>(args)...
     };
     q.enqueue((tmp));
     cout<<"thread pool enqueue one task"<<flush<<endl;
-    cv.notify_one();
+    cv.notify_one(); // 唤醒工作线程
     return task_ptr->get_future();
     
-    //method 2          
-    
-    return future<decltype(f(args...))>();
+    // method 2 return empty future
+    // return future<decltype(f(args...))>();
 }
 ```
 
@@ -263,9 +261,8 @@ class ThreadPool {
             cv.notify_one();
             return task_ptr->get_future();
             
-            //method 2          
-            
-            return future<decltype(f(args...))>();
+            // method 2 return empty future
+            // return future<decltype(f(args...))>();
         }
         
         
