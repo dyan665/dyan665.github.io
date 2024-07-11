@@ -40,20 +40,255 @@ happens-before关系是sequenced-before关系的扩展，额外包括了多线�
 ### synchronizes-with
 synchronizes-with相比于happens-before，则扩展出传播关系，即如果一个线程修改某变量的之后的结果能被其它线程可见，并且修改该变量前的全部操作也能被其它线程可见，那么就是满足synchronizes-with关系，相比于happens-before只关心单变量，synchronizes-with扩展出对该变量前后的范围操作的可见性。
 
-## release-store原语
+## c++支持的内存模型
+C++支持下述几种内存模型，对于relaxed的内存模型，则无任何限制，任由编译器优化与CPU乱序执行，下面将介绍acquire-release内存模型，以及seq_cst内存模型。
+```cpp
+enum memory_order {
+    memory_order_relaxed,
+    memory_order_consume,
+    memory_order_acquire,
+    memory_order_release,
+    memory_order_acq_rel,
+    memory_order_seq_cst
+};
+```
+
+## Acquire-Release内存模型
+
+- memory_order_acquire：用来修饰一个读操作，表示在本线程中，所有后续的关于此变量的内存操作都必须在本条原子操作完成后执行。
+- memory_order_release：用来修饰一个写操作，表示在本线程中，所有之前的针对该变量的内存操作完成后才能执行本条原子操作。
+
+
+
+
+
+## seq_cst内存模型
+
 
 
 ## 内核屏障
 
+```cpp
+/* part 14: 内存屏障 */
 
+#define lfence() __asm__ __volatile__("lfence": : :"memory") 
+#define sfence() __asm__ __volatile__("sfence": : :"memory") 
+#define mfence() __asm__ __volatile__("mfence": : :"memory")
+
+```
 
 ## 内核无锁队列
 
+```cpp
+/* part 13: 无锁消息队列 1生产者1消费者  */
+
+struct kfifo { 
+    unsigned char *buffer;    /* the buffer holding the data */ 
+    unsigned int size;    /* the size of the allocated buffer */ 
+    unsigned int in;    /* data is added at offset (in % size) */ 
+    unsigned int out;    /* data is extracted from off. (out % size) */ 
+    spinlock_t *lock;    /* protects concurrent modifications */ 
+};
+
+struct kfifo *kfifo_alloc(unsigned int size, gfp_t gfp_mask, spinlock_t *lock) 
+{ 
+    unsigned char *buffer; 
+    struct kfifo *ret; 
+
+    /* 
+     * round up to the next power of 2, since our 'let the indices 
+     * wrap' tachnique works only in this case. 
+     */ 
+    if (size & (size - 1)) { 
+        BUG_ON(size > 0x80000000); 
+        size = roundup_pow_of_two(size); 
+    } 
+
+    buffer = kmalloc(size, gfp_mask); 
+    if (!buffer) 
+        return ERR_PTR(-ENOMEM); 
+
+    ret = kfifo_init(buffer, size, gfp_mask, lock); 
+
+    if (IS_ERR(ret)) 
+        kfree(buffer); 
+
+    return ret; 
+} 
+
+unsigned int __kfifo_put(struct kfifo *fifo, 
+             unsigned char *buffer, unsigned int len) 
+{ 
+    unsigned int l; 
+
+    len = min(len, fifo->size - fifo->in + fifo->out); 
+
+    /* 
+     * Ensure that we sample the fifo->out index -before- we 
+     * start putting bytes into the kfifo. 
+     */ 
+
+    smp_mb(); 
+
+    /* first put the data starting from fifo->in to buffer end */ 
+    l = min(len, fifo->size - (fifo->in & (fifo->size - 1))); 
+    memcpy(fifo->buffer + (fifo->in & (fifo->size - 1)), buffer, l); 
+
+    /* then put the rest (if any) at the beginning of the buffer */ 
+    memcpy(fifo->buffer, buffer + l, len - l); 
+
+    /* 
+     * Ensure that we add the bytes to the kfifo -before- 
+     * we update the fifo->in index. 
+     */ 
+
+    smp_wmb(); 
+
+    fifo->in += len; 
+
+    return len; 
+}
+
+unsigned int __kfifo_get(struct kfifo *fifo, 
+             unsigned char *buffer, unsigned int len) 
+{ 
+    unsigned int l; 
+
+    len = min(len, fifo->in - fifo->out); 
+
+    /* 
+     * Ensure that we sample the fifo->in index -before- we 
+     * start removing bytes from the kfifo. 
+     */ 
+
+    smp_rmb(); 
+
+    /* first get the data from fifo->out until the end of the buffer */ 
+    l = min(len, fifo->size - (fifo->out & (fifo->size - 1))); 
+    memcpy(buffer, fifo->buffer + (fifo->out & (fifo->size - 1)), l); 
+
+    /* then get the rest (if any) from the beginning of the buffer */ 
+    memcpy(buffer + l, fifo->buffer, len - l); 
+
+    /* 
+     * Ensure that we remove the bytes from the kfifo -before- 
+     * we update the fifo->out index. 
+     */ 
+
+    smp_mb(); // read(load) write(store) barrier
+
+    fifo->out += len; 
+
+    return len; 
+}
+```
 
 
 
 ## SPSC无锁队列
 
+```cpp
+/* part 15: SPSC https://luyuhuang.tech/2022/10/30/lock-free-queue.html */
+//相对于顺序一致性 基于acquire release语义的同步 可提升8%左右的速度
+//绑定核的话 可提升不稳定也不明确  10%左右 maybe？
+
+template<class T, size_t capSize>
+class spsc : private allocator<T> {
+    public:
+        spsc():_addr(allocator<T>::allocate(capSize)){}
+        spsc(const spsc&) =delete;
+        spsc(spsc &&) =delete;
+        spsc &operator= (const spsc&) = delete;
+        spsc &operator= (spsc&&) = delete;
+        ~spsc(){
+            allocator<T>::deallocate(_addr, capSize);
+        }
+        
+        template<class ...Args>
+        bool emplace(Args && ...args) {
+            size_t h = head.load(memory_order_relaxed);
+            if((h+1)%capSize == tail.load(memory_order_acquire)){
+//              cout<<head.load()<<" "<<tail.load()<<endl;
+                return false;// full
+            }
+            allocator<T>::construct(_addr + h, forward<Args>(args)...);
+            head.store((h+1)%capSize,memory_order_release);
+//          cout<<"head add " << head.load();
+            return true;
+        }
+        
+        bool pop(T& tt){
+            size_t t = tail.load(memory_order_relaxed);
+            if(t == head.load(memory_order_acquire)){
+                return false;//empty
+            }
+            tt = move(_addr[t]);
+            allocator<T>::destroy(_addr+t);
+            tail.store((t+1)%capSize,memory_order_release);
+            return true;
+        }   
+        
+    private:
+        T * _addr = nullptr;
+        atomic<size_t> head{0};
+        atomic<size_t> tail{0};
+};
+
+//#define _GNU_SOURCE
+//#include <pthread.h>
+//
+//void pinThread(int cpu) {
+//  if (cpu < 0) {
+//    return;
+//  }
+//  cpu_set_t cpuset;
+//  CPU_ZERO(&cpuset);
+//  CPU_SET(cpu, &cpuset);
+//  if (pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) ==
+//      -1) {
+//    perror("pthread_setaffinity_no");
+//    exit(1);
+//  }
+//}
+
+
+int main(void){
+    const size_t queueSize = 10000000;
+    const int64_t iters = 10000000;
+    
+    spsc<int,queueSize> spc;
+    thread in,out;
+    int max_num = iters;
+    auto start1 = chrono::steady_clock::now();
+    in = thread([&](){
+//      pinThread(0);
+        for(int i=0;i<max_num;++i){
+            while(!spc.emplace(i)){
+//              cout<<"push fail"<<endl;
+            };
+        }
+    });
+    out = thread([&](){
+//      pinThread(1);
+        int tmp;
+        for(int i=0;i<max_num;++i){
+            while(!spc.pop(tmp));
+//          cout<<tmp<<endl;
+        }
+    });
+    in.join();
+    out.join();
+    auto end1 = chrono::steady_clock::now();
+    cout << (long long )max_num * 1000000 / chrono::duration_cast<chrono::nanoseconds>(end1-start1).count() << "ops/ms";//14737ops/ms
+    return 0;
+}
+
+/*
+    rigtorp SPSCQueue               :   15417 ops/ms
+    spsc(acquire release同步)     :   14737ops/ms
+    spsc 顺序一致性              :   13645ops/ms
+*/
+```
 
 
 
