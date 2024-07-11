@@ -38,7 +38,7 @@ sequenced-before描述的是单线程中的关系，具有可传递性，对于�
 happens-before关系是sequenced-before关系的扩展，额外包括了多线程中的关系。如果A happens-before B，则A的内存状态将在B操作执行之前就可见，这就为线程间的数据访问提供了保证。同样也具有可传递性。
 
 ### synchronizes-with
-synchronizes-with相比于happens-before，则扩展出传播关系，即如果一个线程修改某变量的之后的结果能被其它线程可见，并且修改该变量前的全部操作也能被其它线程可见，那么就是满足synchronizes-with关系，相比于happens-before只关心单变量，synchronizes-with扩展出对该变量前后的范围操作的可见性。
+synchronizes-with相比于happens-before，则扩展出传播关系，即如果一个线程修改某变量的之后的结果能被其它线程可见，并且修改该变量前的全部相关操作也能被其它线程可见，那么就是满足synchronizes-with关系，相比于happens-before只关心单变量，synchronizes-with扩展出对该变量前后的范围操作的可见性。
 
 ## c++支持的内存模型
 C++支持下述几种内存模型，对于relaxed的内存模型，则无任何限制，任由编译器优化与CPU乱序执行，下面将介绍acquire-release内存模型，以及seq_cst内存模型。
@@ -53,27 +53,35 @@ enum memory_order {
 };
 ```
 
-## Acquire-Release内存模型
+### Acquire-Release内存模型
 
 - memory_order_acquire：用来修饰一个读操作，表示在本线程中，所有后续的关于此变量的内存操作都必须在本条原子操作完成后执行。
 - memory_order_release：用来修饰一个写操作，表示在本线程中，所有之前的针对该变量的内存操作完成后才能执行本条原子操作。
 
+Acquire-Release指的并不是release一定先于acquire执行，而是指的可见性，当acquire发现release处的内存改动后，一定也对release前的操作可见。
+- load(acquire)所在的线程中load(acquire)之后的所有写操作（包含非依赖关系），不允许被移动到这个load()的前面，一定在load之后执行。
+- store（release）之前的所有读写操作（包含非依赖关系），不允许被重排到这个store(release)的后面，一定在store之前执行。
+- 如果store(release)在load（acquire）之前执行了（前提），那么store(release)之前的写操作对 load(acquire)之后的读写操作可见。
+
+![Acquire-Release内存模型](./release_acquire.PNG)
 
 
+### seq_cst内存模型
 
+seq_cst内存模型则相对更加严格，不仅要求前后代码不能重排，还互相有可见性。
 
-## seq_cst内存模型
-
-
+![seq_cst内存模型](./seq.PNG)
 
 ## 内核屏障
 
 ```cpp
 /* part 14: 内存屏障 */
 
-#define lfence() __asm__ __volatile__("lfence": : :"memory") 
-#define sfence() __asm__ __volatile__("sfence": : :"memory") 
-#define mfence() __asm__ __volatile__("mfence": : :"memory")
+#define lfence() __asm__ __volatile__("lfence": : :"memory")     // load defence      acquire    
+#define sfence() __asm__ __volatile__("sfence": : :"memory")     // store defence     release    
+#define mfence() __asm__ __volatile__("mfence": : :"memory")     // load + store defence
+
+// 
 
 ```
 
@@ -128,7 +136,7 @@ unsigned int __kfifo_put(struct kfifo *fifo,
      * start putting bytes into the kfifo. 
      */ 
 
-    smp_mb(); 
+    smp_mb();
 
     /* first put the data starting from fifo->in to buffer end */ 
     l = min(len, fifo->size - (fifo->in & (fifo->size - 1))); 
@@ -142,7 +150,7 @@ unsigned int __kfifo_put(struct kfifo *fifo,
      * we update the fifo->in index. 
      */ 
 
-    smp_wmb(); 
+    smp_wmb(); // store defence, make above code visiable in other thread, 保证上面的修改先同步，然后再同步修改fifo->in的值, 保证另外的线程如果能看见in的修改，那么必定能看见上面对对应内存区域的修改
 
     fifo->in += len; 
 
@@ -161,7 +169,7 @@ unsigned int __kfifo_get(struct kfifo *fifo,
      * start removing bytes from the kfifo. 
      */ 
 
-    smp_rmb(); 
+    smp_rmb(); // read load acquire
 
     /* first get the data from fifo->out until the end of the buffer */ 
     l = min(len, fifo->size - (fifo->out & (fifo->size - 1))); 
@@ -188,9 +196,7 @@ unsigned int __kfifo_get(struct kfifo *fifo,
 ## SPSC无锁队列
 
 ```cpp
-/* part 15: SPSC https://luyuhuang.tech/2022/10/30/lock-free-queue.html */
 //相对于顺序一致性 基于acquire release语义的同步 可提升8%左右的速度
-//绑定核的话 可提升不稳定也不明确  10%左右 maybe？
 
 template<class T, size_t capSize>
 class spsc : private allocator<T> {
@@ -207,24 +213,24 @@ class spsc : private allocator<T> {
         template<class ...Args>
         bool emplace(Args && ...args) {
             size_t h = head.load(memory_order_relaxed);
-            if((h+1)%capSize == tail.load(memory_order_acquire)){
+            if((h+1)%capSize == tail.load(memory_order_acquire)){ // loc_1，与loc_4同步，保证loc_4前的销毁在下面的代码中是可见的
 //              cout<<head.load()<<" "<<tail.load()<<endl;
                 return false;// full
             }
             allocator<T>::construct(_addr + h, forward<Args>(args)...);
-            head.store((h+1)%capSize,memory_order_release);
+            head.store((h+1)%capSize,memory_order_release); // loc_2，与loc_3同步，保证上面的构造在loc_3下面的代码中是可见的
 //          cout<<"head add " << head.load();
             return true;
         }
         
         bool pop(T& tt){
             size_t t = tail.load(memory_order_relaxed);
-            if(t == head.load(memory_order_acquire)){
+            if(t == head.load(memory_order_acquire)){ // loc_3
                 return false;//empty
             }
             tt = move(_addr[t]);
             allocator<T>::destroy(_addr+t);
-            tail.store((t+1)%capSize,memory_order_release);
+            tail.store((t+1)%capSize,memory_order_release); // loc_4
             return true;
         }   
         
@@ -284,7 +290,6 @@ int main(void){
 }
 
 /*
-    rigtorp SPSCQueue               :   15417 ops/ms
     spsc(acquire release同步)     :   14737ops/ms
     spsc 顺序一致性              :   13645ops/ms
 */
