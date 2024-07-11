@@ -28,6 +28,18 @@ void thread_2() {
 
 ![多级缓存结构](./多级缓存结构.PNG)
 
+## 关系术语
+对于上述的执行顺序以及不同线程间的可见性，下面介绍相关的三个术语，为sequenced-before、happens-before、synchronizes-with。
+
+### sequenced-before
+sequenced-before描述的是单线程中的关系，具有可传递性，对于两个操作A和B，如果A sequenced-before B，则A的执行应当在B的前面，并且A执行后的结果B也能看到，它引入了一个局部有序性。
+
+### happens-before
+happens-before关系是sequenced-before关系的扩展，额外包括了多线程中的关系。如果A happens-before B，则A的内存状态将在B操作执行之前就可见，这就为线程间的数据访问提供了保证。同样也具有可传递性。
+
+### synchronizes-with
+synchronizes-with相比于happens-before，则扩展出传播关系，即如果一个线程修改某变量的之后的结果能被其它线程可见，并且修改该变量前的全部操作也能被其它线程可见，那么就是满足synchronizes-with关系，相比于happens-before只关心单变量，synchronizes-with扩展出对该变量前后的范围操作的可见性。
+
 ## release-store原语
 
 
@@ -41,3 +53,9 @@ void thread_2() {
 
 
 ## SPSC无锁队列
+
+
+
+
+
+
