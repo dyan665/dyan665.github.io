@@ -23,7 +23,7 @@ typedef enum {
 	STATUS_3,
 	STATUS_4,
 	STATUS_NONE
-}STATUS;
+}STATUS; // 状态
 
 typedef enum {
 	EVENT_1 = 0,
@@ -31,40 +31,40 @@ typedef enum {
 	EVENT_3,
 	EVENT_4,
 	EVENT_NONE
-}EVENT;
+}EVENT; // 事件
 
-typedef void(*CALLBACK)(void* session/*save all status*/,void* input);
+typedef void(*CALLBACK)(void* session/*save all status*/,void* input); // 转移状态需要做的动作
 
 typedef struct{
 	bool isValid;
 	STATUS status;
 	EVENT event;
 	CALLBACK callbackfunc;
-}fsmStruct;
+}fsmStruct; // 有限状态机状态图里的状态关系（当前状态，触发条件，需要做的动作）
 
-fsmStruct fsm[STATUS_NONE][EVENT_NONE] = {};
+fsmStruct fsm[STATUS_NONE][EVENT_NONE] = {}; // 存储全部状态图
 
-bool register(STATUS s, EVENT e, CALLBACK callback){
+bool register(STATUS s, EVENT e, CALLBACK callback){ // 状态转换关系注册
 	//check s and e and callback
 	fsm[s][e] = {1,s,e,callback};
 	return true;
 }
 
-void callbackexample(void* session, void* input){//STATUS_1 when get EVENT 1
+void callbackexample(void* session, void* input){//STATUS_1 when get EVENT 1  // 动作示例
 	//read session
 	//process input and update session
 	//change STATUS and save it in session
 	return;
 }
 
-void dispatch_event(session, msg, eventtype) {
+void dispatch_event(session, msg, eventtype) { // 当事件到达时，触发对应的动作
 	auto callback = fsm(session->status, eventtype);
 	callback(session, msg);
 }
 
 int main(void) {
 	//for loop
-	while(true){
+	while(true){ // 事件循环，等待事件的到来
 		//socket wait for event
 		//epoll()
 		//when rcv a msg, check msg type, according to now status, get event type
