@@ -33,6 +33,15 @@ typedef enum {
 	EVENT_NONE
 }EVENT; // 事件
 
+/*
+struct session{
+	bool isValid; // 是否有效
+	STATUS status; // 当前状态 事关状态机
+	//other data about business // 业务数据等比如sessionId等
+};
+
+*/
+
 typedef void(*CALLBACK)(void* session/*save all status*/,void* input); // 转移状态需要做的动作
 
 typedef struct{
@@ -63,14 +72,14 @@ void dispatch_event(session, msg, eventtype) { // 当事件到达时，触发对
 }
 
 int main(void) {
-	//for loop
+	// for loop
 	while(true){ // 事件循环，等待事件的到来
-		//socket wait for event
-		//epoll()
-		//when rcv a msg, check msg type, according to now status, get event type
-		getsession(msg);//get seesion
-		eventtype = geteventtype(session, msg);
-		dispatch_event(session, msg, eventtype);
+		// socket wait for event
+		// epoll()
+		// when rcv a msg, check msg type, according to now status, get event type
+		getsession(msg);// get seesion according to session id in msg
+		eventtype = geteventtype(session, msg); // get current status, and get event type by receiving msg
+		dispatch_event(session, msg, eventtype); // run fsm and change status
 	}
 	return 0;
 }
