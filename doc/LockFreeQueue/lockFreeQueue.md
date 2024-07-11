@@ -296,6 +296,8 @@ int main(void){
 */
 ```
 
+## 多线程下的无锁队列
+基本实现思路为利用CAS原理，在C++中则利用`atomic`的`compare_exchange_strong`实现，细节待补充...
 
 
 
