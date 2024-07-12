@@ -1,5 +1,7 @@
 # 文章列表
 
+## NA
+
 - [线程池](./doc/ThreadPool/threadPool.md)
 - [无锁队列](./doc/LockFreeQueue/lockFreeQueue.md)
 - [有限状态机](./doc/FSM/fsm.md)
@@ -26,3 +28,11 @@
 - [常用linux命令]()
 - [git必知会]()
 - [其它]()
+
+
+## 设计模式
+- [工厂方法模式](./doc/FactoryMethod/factoryMethod.md)
+- [单例模式]()
+- [观察者模式]()
+- 
+
