@@ -1,7 +1,8 @@
 # 工厂方法模式
 
-## 
+## 结构
 
+![结构](./facmethod.PNG)
 
 ## 
 
@@ -110,6 +111,11 @@ void ClientCode(const Creator& creator) {
 
 int main() {
   std::cout << "App: Launched with the ConcreteCreator1.\n";
+  // std::string cfg = "ConcreteCreator1"; // read from config
+  // Creator* creator = NULL;
+  // if (cfg == "ConcreteCreator1") {
+  //     creator = new ConcreteCreator1();
+  // }
   Creator* creator = new ConcreteCreator1();
   ClientCode(*creator);
   std::cout << std::endl;
