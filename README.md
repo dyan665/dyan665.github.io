@@ -32,7 +32,7 @@
 
 ## 设计模式
 - [工厂方法模式](./doc/FactoryMethod/factoryMethod.md)
-- [单例模式]()
+- [单例模式](./doc/Singleton/singleton.md)
 - [观察者模式]()
 - 
 
