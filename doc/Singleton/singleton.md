@@ -48,8 +48,8 @@ class Singleton
 private:
 	Singleton() { };
 	~Singleton() { };
-	Singleton(const Singleton&);
-	Singleton& operator=(const Singleton&);
+	Singleton(const Singleton&) { };
+	Singleton& operator=(const Singleton&) { };
 public:
 	static Singleton& getInstance() 
         {
@@ -66,10 +66,10 @@ class Singleton
 private:
 	static Singleton instance;
 private:
-	Singleton();
-	~Singleton();
-	Singleton(const Singleton&);
-	Singleton& operator=(const Singleton&);
+	Singleton() { };
+	~Singleton() { };
+	Singleton(const Singleton&) { };
+	Singleton& operator=(const Singleton&) { };
 public:
 	static Singleton& getInstance() {
 		return instance;
