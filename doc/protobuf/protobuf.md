@@ -110,7 +110,7 @@ message Test6 {
   string key = 1;
   striing value = 2;
 }
- 、、、
+ ```
 
 在Test7中添加2个元素：("1", Test1(a=128))，("128", Test1(a=128))，序列化后的结果如下：
 ```
