@@ -34,7 +34,7 @@
 - [工厂方法模式](./doc/FactoryMethod/factoryMethod.md)
 - [抽象工厂模式](./doc/AbstractFactory/abstractFactory.md)
 - [单例模式](./doc/Singleton/singleton.md)
-- [观察者模式]()
+- [观察者模式](./doc/Observer/observer.md)
 - 
 
 
