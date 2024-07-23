@@ -35,6 +35,7 @@
 - [抽象工厂模式](./doc/AbstractFactory/abstractFactory.md)
 - [单例模式](./doc/Singleton/singleton.md)
 - [观察者模式](./doc/Observer/observer.md)
+- [适配器模式](./doc/Adapter/adapter.md)
 - 
 
 
