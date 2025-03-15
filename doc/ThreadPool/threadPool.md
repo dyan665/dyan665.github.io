@@ -9,6 +9,7 @@
 
 ## 线程安全的任务队列
 > 对于任务队列，由于涉及到多线程访问，因此采用`mutex`与`queue`实现线程安全的任务队列，提供的接口主要为`存任务`、`取任务`、`任务数量`。此处采用函数模板实现。
+
 ```cpp
 template<class T> 
 class SafeQueue { /* part 3.1: safe queue */
