@@ -72,6 +72,112 @@ seq_cst内存模型则相对更加严格，不仅要求前后代码不能重排�
 
 ![seq_cst内存模型](./seq.PNG)
 
+
+## SPSC无锁队列
+
+```cpp
+//相对于顺序一致性 基于acquire release语义的同步 可提升8%左右的速度
+
+template<class T, size_t capSize>
+class spsc : private allocator<T> {
+    public:
+        spsc():_addr(allocator<T>::allocate(capSize)){}
+        spsc(const spsc&) =delete;
+        spsc(spsc &&) =delete;
+        spsc &operator= (const spsc&) = delete;
+        spsc &operator= (spsc&&) = delete;
+        ~spsc(){
+            allocator<T>::deallocate(_addr, capSize);
+        }
+        
+        template<class ...Args>
+        bool emplace(Args && ...args) {
+            size_t h = head.load(memory_order_relaxed);
+            if((h+1)%capSize == tail.load(memory_order_acquire)){ // loc_1，与loc_4同步，保证loc_4前的销毁在下面的代码中是可见的
+//              cout<<head.load()<<" "<<tail.load()<<endl;
+                return false;// full
+            }
+            allocator<T>::construct(_addr + h, forward<Args>(args)...);
+            head.store((h+1)%capSize,memory_order_release); // loc_2，与loc_3同步，保证上面的构造在loc_3下面的代码中是可见的
+//          cout<<"head add " << head.load();
+            return true;
+        }
+        
+        bool pop(T& tt){
+            size_t t = tail.load(memory_order_relaxed);
+            if(t == head.load(memory_order_acquire)){ // loc_3
+                return false;//empty
+            }
+            tt = move(_addr[t]);
+            allocator<T>::destroy(_addr+t);
+            tail.store((t+1)%capSize,memory_order_release); // loc_4
+            return true;
+        }   
+        
+    private:
+        T * _addr = nullptr;
+        atomic<size_t> head{0};
+        atomic<size_t> tail{0};
+};
+
+//#define _GNU_SOURCE
+//#include <pthread.h>
+//
+//void pinThread(int cpu) {
+//  if (cpu < 0) {
+//    return;
+//  }
+//  cpu_set_t cpuset;
+//  CPU_ZERO(&cpuset);
+//  CPU_SET(cpu, &cpuset);
+//  if (pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) ==
+//      -1) {
+//    perror("pthread_setaffinity_no");
+//    exit(1);
+//  }
+//}
+
+
+int main(void){
+    const size_t queueSize = 10000000;
+    const int64_t iters = 10000000;
+    
+    spsc<int,queueSize> spc;
+    thread in,out;
+    int max_num = iters;
+    auto start1 = chrono::steady_clock::now();
+    in = thread([&](){
+//      pinThread(0);
+        for(int i=0;i<max_num;++i){
+            while(!spc.emplace(i)){
+//              cout<<"push fail"<<endl;
+            };
+        }
+    });
+    out = thread([&](){
+//      pinThread(1);
+        int tmp;
+        for(int i=0;i<max_num;++i){
+            while(!spc.pop(tmp));
+//          cout<<tmp<<endl;
+        }
+    });
+    in.join();
+    out.join();
+    auto end1 = chrono::steady_clock::now();
+    cout << (long long )max_num * 1000000 / chrono::duration_cast<chrono::nanoseconds>(end1-start1).count() << "ops/ms";//14737ops/ms
+    return 0;
+}
+
+/*
+    spsc(acquire release同步)     :   14737ops/ms
+    spsc 顺序一致性              :   13645ops/ms
+*/
+```
+
+## 多线程下的无锁队列
+基本实现思路为利用CAS原理，在C++中则利用`atomic`的`compare_exchange_strong`实现，细节待补充...
+
 ## 内核屏障
 待补充...
 ```cpp
@@ -192,112 +298,6 @@ unsigned int __kfifo_get(struct kfifo *fifo,
 }
 ```
 
-
-
-## SPSC无锁队列
-
-```cpp
-//相对于顺序一致性 基于acquire release语义的同步 可提升8%左右的速度
-
-template<class T, size_t capSize>
-class spsc : private allocator<T> {
-    public:
-        spsc():_addr(allocator<T>::allocate(capSize)){}
-        spsc(const spsc&) =delete;
-        spsc(spsc &&) =delete;
-        spsc &operator= (const spsc&) = delete;
-        spsc &operator= (spsc&&) = delete;
-        ~spsc(){
-            allocator<T>::deallocate(_addr, capSize);
-        }
-        
-        template<class ...Args>
-        bool emplace(Args && ...args) {
-            size_t h = head.load(memory_order_relaxed);
-            if((h+1)%capSize == tail.load(memory_order_acquire)){ // loc_1，与loc_4同步，保证loc_4前的销毁在下面的代码中是可见的
-//              cout<<head.load()<<" "<<tail.load()<<endl;
-                return false;// full
-            }
-            allocator<T>::construct(_addr + h, forward<Args>(args)...);
-            head.store((h+1)%capSize,memory_order_release); // loc_2，与loc_3同步，保证上面的构造在loc_3下面的代码中是可见的
-//          cout<<"head add " << head.load();
-            return true;
-        }
-        
-        bool pop(T& tt){
-            size_t t = tail.load(memory_order_relaxed);
-            if(t == head.load(memory_order_acquire)){ // loc_3
-                return false;//empty
-            }
-            tt = move(_addr[t]);
-            allocator<T>::destroy(_addr+t);
-            tail.store((t+1)%capSize,memory_order_release); // loc_4
-            return true;
-        }   
-        
-    private:
-        T * _addr = nullptr;
-        atomic<size_t> head{0};
-        atomic<size_t> tail{0};
-};
-
-//#define _GNU_SOURCE
-//#include <pthread.h>
-//
-//void pinThread(int cpu) {
-//  if (cpu < 0) {
-//    return;
-//  }
-//  cpu_set_t cpuset;
-//  CPU_ZERO(&cpuset);
-//  CPU_SET(cpu, &cpuset);
-//  if (pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) ==
-//      -1) {
-//    perror("pthread_setaffinity_no");
-//    exit(1);
-//  }
-//}
-
-
-int main(void){
-    const size_t queueSize = 10000000;
-    const int64_t iters = 10000000;
-    
-    spsc<int,queueSize> spc;
-    thread in,out;
-    int max_num = iters;
-    auto start1 = chrono::steady_clock::now();
-    in = thread([&](){
-//      pinThread(0);
-        for(int i=0;i<max_num;++i){
-            while(!spc.emplace(i)){
-//              cout<<"push fail"<<endl;
-            };
-        }
-    });
-    out = thread([&](){
-//      pinThread(1);
-        int tmp;
-        for(int i=0;i<max_num;++i){
-            while(!spc.pop(tmp));
-//          cout<<tmp<<endl;
-        }
-    });
-    in.join();
-    out.join();
-    auto end1 = chrono::steady_clock::now();
-    cout << (long long )max_num * 1000000 / chrono::duration_cast<chrono::nanoseconds>(end1-start1).count() << "ops/ms";//14737ops/ms
-    return 0;
-}
-
-/*
-    spsc(acquire release同步)     :   14737ops/ms
-    spsc 顺序一致性              :   13645ops/ms
-*/
-```
-
-## 多线程下的无锁队列
-基本实现思路为利用CAS原理，在C++中则利用`atomic`的`compare_exchange_strong`实现，细节待补充...
 
 
 
