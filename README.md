@@ -1,7 +1,9 @@
 # 文章列表
 
 ## NA
-
+- [KMP](./doc/KMP/KMP.md)
+- [BM](./doc/BM/BM.md)
+- [WM](./doc/WM/WM.md)
 - [线程池](./doc/ThreadPool/threadPool.md)
 - [无锁队列](./doc/LockFreeQueue/lockFreeQueue.md)
 - [有限状态机](./doc/FSM/fsm.md)
