@@ -1,3 +1,6 @@
+
+[返回主页](../../README.md)
+
 > BM算法的主要思想：从尾部开始匹配（相较于从头开始，尾部开始能更早发现失配，能跳转更大距离，优化了KMP下的反复失配问题）、bad char（坏字符）、good suffix（好子串）。图参考[BM](http://ruanyifeng.com/blog/2013/05/boyer-moore_string_search_algorithm.html)。
 
 > 注意：失配时，BM始终从模式串的尾部开始匹配。
