@@ -3,9 +3,9 @@
 [返回主页](../../README.md)
 
 # 原理
-> 要点：map记录子到父的关系，对于
->
-> 
+> 要点：map记录子到父的关系，在查找根的find函数中，顺便修改子节点的根为0层的根，方便后续查找。
+> 注意：对于新的节点，若未记录在map中，则需要先创建新的连通。
+
 ```cpp
 class Union {
 public:
@@ -17,7 +17,7 @@ public:
         return pre[child]; // 返回根节点
     }
 
-    // 创建连通或者合并连通
+    // 合并连通，若某个节点是新的，顺便创建新连通然后再合并
     void myunion(unordered_map<int,int>& pre,int child,int parent){
         if(!pre.count(child))cnt++; // 新节点
         if(find(pre,child)!=find(pre,parent))cnt--; // 两者不属于一个连通
