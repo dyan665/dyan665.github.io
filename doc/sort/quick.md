@@ -17,7 +17,7 @@ public:
         while(left<right){
             while(left<right&&nums[right]>=tar)right--;
             nums[left]=nums[right];
-            while(left<right&&nums[left]<tar)left++;
+            while(left<right&&nums[left]<=tar)left++;
             nums[right]=nums[left];
         }
         nums[left]=tar;
