@@ -4,10 +4,16 @@
 - [KMP](./doc/KMP/KMP.md)
 - [BM](./doc/BM/BM.md)
 - [WM](./doc/WM/WM.md)
+- [生产者消费者模型](./doc/producerConsumer/pC.md)
 - [线程池](./doc/ThreadPool/threadPool.md)
 - [无锁队列](./doc/LockFreeQueue/lockFreeQueue.md)
 - [有限状态机](./doc/FSM/fsm.md)
 - [protobuf](./doc/protobuf/protobuf.md)
+- [注册与类工厂反射](./doc/classRegister/classRegister.md)
+- [大小端](./doc/endian/endian.md)
+- [堆排](./doc/sort/heap.md)
+- [快排](./doc/sort/quick.md)
+- []()
 - [taskflow剖析](./doc/TaskFlow/taskflow.md)
 - [基于taskflow的任务流引擎]()
 - [插件技术](./doc/Plugin/plugin.md)
@@ -47,7 +53,9 @@
 - [模板推导]()
 - [vector]()
 - [queue]()
-
+- [unique_ptr](./doc/ptr/unique_ptr.md)
+- [shared_ptr](./doc/ptr/shared_ptr.md)
+- []()
 
 
 
