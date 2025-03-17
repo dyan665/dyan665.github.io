@@ -153,10 +153,10 @@ asynhandle(){
 
 handlerMap[] = {
   {"/V1/business1/resource1",
-        {{METHOD_POST,handler1},{METHOD_GET,handler1_1}}
+        { {METHOD_POST,handler1},{METHOD_GET,handler1_1} }
     },
   {"/V1/business1/resource2",
-        {{METHOD_POST,handler2}}
+        { {METHOD_POST,handler2} }
     },
 }
 
