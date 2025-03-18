@@ -15,9 +15,9 @@
 > 通过flex解析出的词法流，通过其中的词类型（TOKEN类型）以及字符串等匹配对应的语法，匹配语法后能够通过$1、$2等获取到语法规约式后对应的内容，$$则表示规约后的元素的值，比如condition：statement __AND__ statement，$$表示的是规约后的condition的值，$1和$3表示statement的值，__AND__则为一个TOKEN，当规约后，:后的三个词法元素（词类型以及对应的值）全出栈，condition入栈。
 
 # 例子
-```cpp
+```
+规则 PART
 
-规则：
 [Info]
 SignID = 131776
 Author = xxxxxxx
@@ -42,8 +42,9 @@ patterns:
 condition:
 @a0 && @a1
 
+```
 
-
+```
 FLEX PART
 
 int pre_state;
@@ -194,9 +195,9 @@ RULE_ID [+]?{DEC_DIGIT}+
 
 . {}
 
+```
 
-
-
+```
 BISON PART
 
 %union{
@@ -271,20 +272,20 @@ ruletype : __VAL_TYPE__ {finnal_ruletype=$1}
 
 patterns: {$$=0;}
 		| pattern patterns {
-				$1->next = $2;
+				$1->next = $2;/*链表串联pattern*/
 				$$ = $1;
 			}
 		;
 pattern : __PATTERN_NAME__ ':' '{' statements '}'  {
-				$$ = new_pattern($1,$4);
+				$$ = new_pattern($1,$4);/*根据statement创建pattern*/
 			}
 statements: statement {$$ = $1;}
-		| statements statement {
-				$$ = join_statement($1,$2);
-				merge_statement($$);
+		| statements statement {/*表达式间无符号的情况*/
+				$$ = join_statement($1,$2);/*链表串联在最后*/
+				merge_statement($$); /*对于相邻是字符串匹配的statement进行合并，直接拼接，支持的是多行字符串自动拼接*/
 			}
-statement: __HEX_DATA__  {
-				$$ = new_hex($1);
+statement: __HEX_DATA__  { /*字符串匹配类型*/
+				$$ = new_hex_statement($1);/*根据字符串创建statement*/
 			}
 		| number {$$=$1;}
 		| __FUNC_CALL__ '(' arg_lists ')'  {
@@ -296,32 +297,36 @@ statement: __HEX_DATA__  {
 		| statement __MUL__ statement  {
 				$$ = new_math_statement($1,$3,'*');
 			}
+		| __PATTERN_NAME__ {/*支持condition中写规则id@xxx*/
+				$$ = new_pattern_id_statement($1);/*PATTERN_ID pattern_name*/
+			}
 		;
 arg_lists: {$$=0;}
-		| statements  {
-				$$ = mew_statement_argument($1);
+		| statements  { /*参数支持表达式*/
+				$$ = new_argument_statement($1);
 			}
-		| arg_lists ',' statements  {
-				func_argument_t* t =new_statement_argument($1);
-				$$ = join_arg_list($1,t);
+		| arg_lists ',' statements  { /*多参数情况*/
+				func_argument_t* t =new_argument_statement($1);
+				$$ = join_arg_list($1,t);/*t链接到$1最后，参数顺序变成链表*/
 			}
-conditions: {}
+conditions: {$$=0;}
+		| condition {$$=$1;}
+condition: __TRUE__ {$$=new_bool_condition(1);}
 		| statement {$$=new_statement_condition($1);}
 		| condition __AND__ condition {$$=new_logic_condition(BCT_AND,$1,$3);}
 		| condition __OR__ condition {$$=new_logic_condition(BCT_OR,$1,$3);}
-		| condition __NOT__ condition {$$=new_logic_condition(BCT_NOT,$2,0);}
+		| __NOT__ condition {$$=new_logic_condition(BCT_NOT,$2,0);}
 		| '(' condition ')' {$$=$2;}
 		| statement __CMP_E_ statement {$$=new_cmp_condition(BCT_E,$1,$3);}
 		| statement __CMP_G_ statement{$$=new_cmp_condition(BCT_G,$1,$3);}
 		;
-number	: {}
-		| __INT32_NUM__ {$$=new_int32_statement($1);}
+number	: __INT32_NUM__ {$$=new_int32_statement($1);}
 		;
 
+```
 
 
-
-
+```
 CODE PART
 原理：解析规则与条件，整体构建为一颗AST二叉树，序列化时按照先序来序列化
 INFO_TYPE  规则内基础信息的类型，如ID、AUTHOR等
@@ -332,21 +337,24 @@ func_argument_t* {
 	func_argument_t* next;
 };
 statement_t{
-	enum stat_cmd cmd; // NUMBER/FUNC/ADD/SUB/MUL/STRING
+	enum stat_cmd cmd; // NUMBER/FUNC/ADD/SUB/MUL/STRING/PATTERN_ID
 	union{
 		struct{func_call_t;func_argument_t;}; // used by function
 		int32_t int32; // used by number
+		char* pattern_name;//used by PATTERN_ID;
+		struct{uint8* data;int len;}match_data;// used by __HEX_DATA__ 字符串匹配
 		struct{statement_t *l,*r;}; // used by plus mul bitor bitand
 	};
 	statement_t* next;
 }
+//condition_t若类型为PATTERN_ID类型的STATEMENT 转为特殊类型的FUNC argument为对应pattern name
 condition_t{
-	enum condition_type type; // AND OR NOT BOOL STATEMENT E GE LESS
+	enum condition_type type; // AND OR NOT E GE LESS  BOOL STATEMENT
 	union{
-		int bool_val;
-		statement_t* statment;
+		int bool_val;//used by bool 
+		statement_t* statment;// used by func
 		struct{
-			statement_t* l; // 左右为表达式 
+			statement_t* l; // 左右为表达式  used by compare condition
 			statement_t* r;
 		}
 	};
@@ -355,6 +363,7 @@ condition_t{
 }
 pattern_t{
 	char* name;
+	statement_t* statements;
 	pattern_t* next;
 }
 func_call_t{
@@ -367,6 +376,103 @@ rule_t{
 	pattern_t* pattern_list;
 	condition_t* tree;
 	statement_t* kill_list;
+}
+
+规则中的pattern部分数据结构组织结构：
+
+patterns是由pattern串联的链表；
+pattern是由statements组成；
+statements是由statement串联的链表，对应{}中顺序定义的函数，代表执行顺序；
+statement可能是函数调用、字符串、有操作符的表达式；
+函数调用由函数名与参数链表组成；
+字符串直接保存为statement；
+有操作符的表达式则被表示为一颗树，根节点为操作符+-*/；
+
+规则中的condition部分数据结构组织方式：
+conditions由condition的树组成，根节点为操作符&& || ! > < 等；
+
+
+序列化：
+condition：
+从根开始，先序遍历存储每一个节点；对于父子关系，则记录从condition序列化存储起始位置开始的偏移；
+
+condition段、statement段、match_data段、argument段、pattern段、rules段。
+
+在构建pattern过程中，会构建一个shift表，类似WM算法，提高匹配速度，方便索引到对应的pattern。也就是每个pattern的第一个字符串为key，在匹配过程中，会首先匹配第一个字符串，若匹配上再考虑其中的rule的执行。
+
+
+bin_condition_head_t{
+	uint8_t type;
+	offset l;
+	offset r;
+	offset parent;
+}
+
+bin_bool_condition_t{
+	head;
+	int8 bool_val;
+}
+
+bin_logic_condition_t{
+	head;
+}
+
+bin_statement_condition_t{
+	head;
+	offset statement; // 对应statement存储于statement块，偏移基于statement块起始位置
+	length statement_len;
+}
+
+bin_cmp_condition_t{
+	head;
+	offset lcs;
+	length lcs_len;
+	offset rcs;
+	length rcs_len;
+}
+
+bin_arg_head_t{
+	int8 type;
+}
+
+bin_statement_arg_t{
+	arg_head;
+	offset statement;
+	length statement_len;
+}
+
+bin_statement_head_t{
+	int8 cmd;
+}
+
+bin_match_statement_t{
+	st_head;
+	length data_len;
+	offset data;
+}
+
+bin_func_statement_t{
+	st_head;
+	int func_code;
+	offset arg_off;
+}
+
+bin_number_statement_t{
+	st_head;
+	int num;
+}
+
+bin_pattern_id_statement_t{
+	st_head;
+	int pattern_id;
+}
+
+bin_math_statement_t{
+	st_head;
+	length l_st_len;
+	offset l_st_off;
+	length r_st_len;
+	offset r_st_off;
 }
 
 
