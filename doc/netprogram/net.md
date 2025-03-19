@@ -34,7 +34,7 @@ TIME_WAIT的2MSL(MSL=30s到2min)，分组在网络中的最大存活时间，原
 #### 2.6 TCP状态转换图
 图存在部分错误，注意辨别
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733196994976-148be5db-16c0-48cd-b136-6919e43417b0.png)
+![2.4](./2.4.png)
 
 
 
@@ -65,7 +65,7 @@ IP层默认需要支持的最小重组缓冲区大小：IPV4为576字节，IPV6�
 
 SO_SNDBUF套接字选项：更改TCP内核发送缓冲区大小。影响，若基于阻塞式的套接字，内核缓冲区写满会导致进程挂起休眠，write无法及时返回。当写入到套接字缓冲区，write即返回。
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733129414293-f7359cdb-732e-4c00-b8ac-d2b3fc850ec2.png)
+![2.15](2.15.png)
 
 
 
@@ -97,15 +97,18 @@ s.sin_family、s.sin_port、s.sin_addr.s_addr
 
 字节序转换函数：
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733133299275-deb93d79-254d-41e8-904c-23d8de0ace65.png)
+![3.2.1](3.2.1.png)
 
 字节处理函数：
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733133468162-1d54bc80-7290-40b8-bc1f-28fa05117f97.png)![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733133515581-792ee19f-49f4-4417-b69f-bd2ff8f58160.png)
+![3.2.2](3.2.2.png)
+![3.2.3](3.2.3.png)
 
 地址转换函数：
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733133707396-a0a1c98f-3116-47e9-a164-04af06b7f1a3.png)![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733133904521-d4ed6be0-ce9a-4ff5-9eb7-a407fcece8ce.png)family不支持返回EAINOSUPPORT，len太小不足容纳结果，返回ENOSPC错误。
+![3.2.4](3.2.4.png)
+![3.2.5](3.2.5.png)
+family不支持返回EAINOSUPPORT，len太小不足容纳结果，返回ENOSPC错误。
 
 
 
