@@ -395,25 +395,25 @@ poll函数：描述符个数不受限，但仍需遍历获取到就绪的描述�
 ![](7.5.6.5.png)
 
 ![](7.5.6.6.png)
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733310817383-ba2d4eb8-1cc4-43ea-9453-29531b28cc77.png)
+![](7.5.6.7.png)
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733310897608-0d47d3bd-eefe-40ab-858f-6d52d505e42e.png)
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733311176655-7805c64d-8b2c-4054-9b57-0a3614f0bb5b.png)
+![](7.5.6.8.png)
+![](7.5.6.9.png)
 
 
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733311205816-7a23b39b-9ce3-45b0-97d4-d8737916f06b.png)
+![](7.5.6.10.png)
 
 ##### 7.5.7 SO_OOBINLINE
 带外数据保留在正常输入队列中，接收函数不能通过MSG_OOB标志读取带外数据。
 
 ##### 7.5.8 SO_RCVBUF与SO_SNDBUF
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733311548505-fe27a667-cc6b-4550-ac32-ebb60b955cef.png)
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733311635542-a52b52b1-095e-4dbc-9b35-0f509c197ee5.png)
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733311700148-be28818a-36be-4d42-b2b4-662b3257e77e.png)
+![](7.5.8.1.png)
+![](7.5.8.2.png)
+![](7.5.8.3.png)
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733311994218-304386dc-e45f-49d6-a445-ae460695591c.png)
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733312007336-35e320e5-8094-4887-a482-c0916a561fe8.png)
+![](7.5.8.4.png)
+![](7.5.8.5.png)
 
 ##### 7.5.9 SO_RCVLOWAT与SO_SNDLOWAT
 主要提供给IO多路复用api用（比如select），接收低水位标记指的是让select可读时套接字接收缓冲区内所需数据量，对于TCP、UDP，该值默认为1；发送低水位标记指的是让select可写时套接字发送缓冲区内所需的可用空间，对于TCP一般默认2048，UDP没有发送缓冲区，但存在发送缓冲区大小属性，当发送缓冲区大小大于发送低水位标记，UDP总是可写。
@@ -422,13 +422,13 @@ poll函数：描述符个数不受限，但仍需遍历获取到就绪的描述�
 给发送与接收设置一个超市值，默认禁止超时。影响读：read、readv、recv、recvfrom、recvmsg；影响写：write、writev、send、sendto、sendmsg。
 
 ##### 7.5.11 SO_REUSEADDR与SO_REUSEPORT
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733370993125-b7181ff7-677c-4bbc-8676-8079863f98fd.png)
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733380588337-b87b5de6-f05e-4bb6-bf30-a30ae02c9818.png)
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733380615077-98fc23a5-940b-4f00-ab79-2962850a03f6.png)
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733380866890-697439be-45e1-4c16-8c58-0ffe8e3cab6b.png)
+![](7.5.11.1.png)
+![](7.5.11.2.png)
+![](7.5.11.3.png)
+![](7.5.11.4.png)
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733381073971-5655a4c5-e265-497e-ac2b-70590431f973.png)
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733381102534-e61dc256-6110-4afc-9a22-2c03ced67f74.png)
+![](7.5.11.5.png)
+![](7.5.11.6.png)
 
 ##### 7.5.12 SO_TYPE
 返回SO_STREAM或者SO_DGRAM等套接字类型。
@@ -464,31 +464,31 @@ poll函数：描述符个数不受限，但仍需遍历获取到就绪的描述�
 ##### 7.9.2 TCP_NODELAY
 用于禁止Nagle算法，该算法默认是开启的。该算法就是当网络上存在未确认的小分组时，后续的小分组不会立即发送出去，而是等到确认返回，或者累积满为一个MSS才会发送。
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733383326469-8b6f4119-9b0e-4987-bf17-d27785948b5b.png)
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733383449026-bb6ac360-d830-4211-b121-a6836b8aa204.png)
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733383555006-0e200500-c387-4939-af8f-acd2e6b5385d.png)
+![](7.9.2.1.png)
+![](7.9.2.2.png)
+![](7.9.2.3.png)
 
 #### 7.10 SCTP套接字选项
 
 
 #### 7.11 fcntl函数（设置套接字为非阻塞）
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733384216946-b337e518-3b54-4f58-a82e-be51943ad3b6.png)
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733384259152-c30381c8-2677-418b-bdab-5707a86ad06e.png)
+![](7.11.1.png)
+![](7.11.2.png)
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733384269599-ce884da0-edb2-4f75-a48b-38f5efee2bfc.png)
+![](7.11.3.png)
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733384290400-02d4191b-111f-4c8b-ae63-fce9e22d22ae.png)
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733384310610-4f5f61c2-57d4-4251-b952-dbc93449fcb9.png)
+![](7.11.4.png)
+![](7.11.5.png)
 
 ### 第八章 基本UDP套接字编程
 #### 8.1 概述
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733384414420-77b3cb81-abe9-4e25-afc0-38a559c9849c.png)
+![](8.1.1.png)
 
 #### 8.2 recvfrom与sendto
 此处sendto函数最后一个参数错误，是socklen_t，是一个值而不是指针。
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733384468526-cf6c9870-b3be-4672-8789-f74330c02471.png)
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733384961948-ec4a73bf-9bc2-4f5a-989a-c1ce338a3d28.png)
+![](8.2.1.png)
+![](8.2.2.png)
 
 #### 8.7 数据报丢失
 给recvfrom设置一个超时时间，后续会关注是请求丢失还是响应丢失。
@@ -499,22 +499,22 @@ poll函数：描述符个数不受限，但仍需遍历获取到就绪的描述�
 #### 8.9 服务器进程未运行
 UDP在发送数据前，可能会先发送ARP数据确定对端，假如未运行，则返回一个端口不可达的ICMP错误，该错误只会异步返回，不会在sendto处返回。
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733386255676-f915bd08-e9c3-47bf-aaf1-5eca369184da.png)
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733386519758-df945f59-fa5c-4580-96a1-83217995236e.png)
+![](8.9.1.png)
+![](8.9.2.png)
 
 #### 8.11 UDP的connect函数
 UDP调用connect不会给对端发送任何数据，只是在本地保存对端IP与端口，同时搜索路由表选定本地IP与端口。
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733386575983-3b3075c7-9e17-4ce4-b952-93c607ef3546.png)
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733386609238-2d43fb33-08c7-456d-9b4a-04f94ce20231.png)
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733386674501-01933cb8-5109-4d32-b475-45c5360cb25d.png)
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733386782777-43233aa1-fe65-48bd-915b-1b18f6cafa23.png)
+![](8.11.1.png)
+![](8.11.2.png)
+![](8.11.3.png)
+![](8.11.4.png)
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733386884634-4a098dde-8b4e-42f7-b2f2-d090433f0c06.png)
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733387020545-66841e0a-6dfc-4544-b1d3-7a6c54569430.png)
+![](8.11.5.png)
+![](8.11.6.png)
 
 #### 8.12 UDP客户端
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733387125433-a98c792a-3e36-4a5b-a5c3-882ad134db5d.png)
+![](8.12.1.png)
 
 UDP只有在发送数据后才会收到ICMP错误，但TCP在connect时就会收到错误。
 
@@ -532,13 +532,13 @@ UDP当缓冲区满自动丢失数据，并且不告知用户程序。
 
 ### 第十一章 名字与地址的转换
 #### 11.3 gethostbyname函数
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733388649914-1799626e-3357-4de3-ae97-159cd741dbc6.png)
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733388747927-98d3d378-525b-4593-bbf9-e4abec567610.png)
+![](11.3.1.png)
+![](11.3.2.png)
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733388798735-3808d3ec-30c0-46fd-b185-2c02c09ed89a.png)
+![](11.3.3.png)
 
 #### 11.4 gethostbyaddr
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733388961878-b676c5b7-2dbc-4952-815f-a55f6890d1e1.png)
+![](11.4.1.png)
 
 #### 11.5 getservbyname与getservbyport
 #### 11.6 getaddrinfo（V4 V6通用）
@@ -593,13 +593,13 @@ UDP当缓冲区满自动丢失数据，并且不告知用户程序。
 
 对套接字设置非阻塞后再调用connect，如果连接已启动（三次握手已启动）但尚未完成（未收到对方的ACK），就会返回EINPROGRESS错误，connect本身返回-1。如果立马连接成功则返回0。
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1734007885212-c8113611-e442-4874-91ec-41678cb14eb3.png)
+![](16.3.1.png)
 
 对上述套接字调select或者epoll后，当连接成功或者失败的时候，套接字会变得可读或者可写（一般是检测可写），此时可通过getsockopt+SO_ERROR选项获取状态，若返回0，可能存在错误（通过传回参数error检查）；若返回-1，一定发送错误，检查errno。可能出现的错误有ECONNREFUSED、ETIMEOUT等。
 
 除此之外，还有其它检测方法，如调getpeername、read长度为0的数据、再次调connect。
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1734007271607-9c71396a-05fb-48ae-9a69-44f8b80eb3a4.png)
+![](16.3.2.png)
 
 可能出现connect被中断的情况，即使是在非阻塞的情况下，此时会返回错误EINTR，但三次握手已经开始，不必再次调用connect，否则返回EADDRINUSE错误。
 
@@ -608,24 +608,24 @@ UDP当缓冲区满自动丢失数据，并且不告知用户程序。
 #### 16.6 非阻塞accept
 **注意看SO_LINGER的设置：**特殊情况可能导致服务器阻塞于accept上，即使使用了IO多路复用。当客户端发送SYN后，客户端立马发送了RST，这时服务端已经从epoll或者select返回，但还未来得及调用accept，此时若服务端监听描述符为阻塞的，则导致服务端阻塞于accept上（因为收到SYN后会放入待连接队列，收到RST则从队列中删除，此时若调accept则可能出现队列为空而阻塞），部分实现不会阻塞，则会返回ECONNABORTED或者EPROTO错误。对于阻塞的情况，将监听套接字设置为非阻塞，则会返回EWOULDBLOCK错误，这样就能避免出现阻塞的情况发生。
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1734009274674-05303424-2e03-4a25-8ce8-634c3b1786e4.png)
+![](16.6.1.png)
 
 看accept4接口，可设置非阻塞。
 
 ### 第十七章 ioctl操作
-
+略
 
 ### 第二十章 广播
-
+略
 
 ### 第二十一章 多播
-
+略
 
 ### 第二十二章 高级UDP编程
-
+略
 
 ### 第二十六章 线程
-
+略
 
 ### 第二十七章 IP选项
-
+略
