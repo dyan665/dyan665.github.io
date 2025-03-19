@@ -172,20 +172,20 @@ getsockname获取地址与端口，包括随机端口值。
 
 多进程版本的并发服务器：文件描述符存在引用计数，父进程关闭socket不会引起发送FIN，而是减小引用计数，只有当引用计数变为0的时候才是真正关闭发送FIN的时候。shutdown函数会触发发送FIN。
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733201628179-bb386a0f-4e49-4d56-b89e-ad7f8e401191.png)
+![](4.8.1.png)
 
 
 
 #### 4.9 close函数
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733202017179-5dfa0d8c-10a6-4887-85eb-997196b408b8.png)
+![](4.9.1.png)
 
 #### 4.10 getsockname与getpeername
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733202161246-b11b5d14-e444-4c57-bb05-e70d49cd15c7.png)
+![](4.10.1.png)
 
 ### 第五章 TCP客户端、服务器示例
 #### 5.6 正常启动
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733204277304-b0bf9984-ab79-4490-8413-d64f08855728.png)
+![](5.6.1.png)
 
 
 
@@ -204,7 +204,7 @@ signal、sigaction函数捕获信号。
 
 
 #### 5.9 处理SIGCHID信号
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733211591036-63ca7f5d-854a-4282-8076-d6ea3f368b5d.png)
+![](5.9.1.png)
 
 防止子进程僵死，就需要捕获SIGCHID或者将子进程detach掉。
 
@@ -213,20 +213,20 @@ signal、sigaction函数捕获信号。
 
 
 #### 5.10 wait函数与waitpid函数
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733212393573-b970cb68-856d-4473-b2fd-b6d01ea7342c.png)
+![](5.10.1.png)
 
 5.9信号处理的问题：unix信号一般是不排队的，也就是当出现多次触发时，最终只会调用一次处理函数，而不会记录次数。比如多个子进程结束，假如他们都是同一时间发送SIGCHID并同一时间到达父进程，最终父进程会执行一遍SIGCHID信号处理函数，导致其中只有一个被正常结束，剩余全部僵死，实际情况是可能执行未知次处理函数，据信号到达时间定。
 
 解决方式：用waitpid，指定WNOHANG参数，循环获取已结束子进程的状态。
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733221577237-c4f552d8-fae0-4ef9-9859-3ed239ff9955.png)
+![](5.10.2.png)
 
 
 
 #### 5.11 accept返回前连接终止
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733222171276-4e5d7196-6da1-48f5-955b-c592ed9f6e23.png)
+![](5.11.1.png)
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733222185929-145fa3a9-ec98-4493-96c7-8cc2e63058ef.png)
+![](5.11.2.png)
 
 POSIX规定，此时accept返回errno为ECONNABORTED。
 
