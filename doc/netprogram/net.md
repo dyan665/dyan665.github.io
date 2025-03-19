@@ -4,7 +4,7 @@
 
 
 ### 第二章
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733112059747-c20403f3-3278-4173-9f3a-4cd32abdc30d.png)
+![2.2](./2.2.png)
 
 
 
@@ -16,9 +16,9 @@ SO_ECVBUF，窗口大小。
 
 
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733124152638-518b1682-f593-4a37-b4ca-0a8538b7787d.png)
+![2.6.3](./2.6.3.png)
 
-![](https://cdn.nlark.com/yuque/0/2024/png/42763158/1733124808736-6afc55a5-ec8b-4631-a3ed-4f9bf2892bab.png)
+![2.5](./2.5.png)
 
 
 
