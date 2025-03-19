@@ -55,7 +55,7 @@
 - [完美转发](/doc/cpp/forward.md)
 - [unique_ptr](./doc/ptr/unique_ptr.md)
 - [shared_ptr](./doc/ptr/shared_ptr.md)
-- [模板推导](./doc/template/base.md)
+- [模板基础类型推导](./doc/template/base.md)
 - [vector]()
 - [queue]()
 
