@@ -29,15 +29,15 @@
 - [页表机制]()
 - [进程切换]()
 - [redis剖析]()
-<!-- 
-- [skynet剖析]() 
-- [muduo剖析]()
--->
 - [zookeeper]()
 - [kafka]()
 - [常用linux命令]()
 - [git必知会]()
 - [其它]()
+<!-- 
+- [skynet剖析]() 
+- [muduo剖析]()
+-->
 
 ## 网络编程
 - [unix网络编程](./doc/netprogram/net.md)
