@@ -23,15 +23,16 @@
 - [基于RPC实现分布式算法]()
 - [reactor高并发服务器](./doc/reactorServer/reactor.md)
 - [并发模型-mailbox、csp等]()
-- [IP地址与端口重用&多线程进程下监听同一端口]()
 - [一致性hash](./doc/conshash/conshash.md)
 - [分布式协议raft](./doc/raft/raft.md)
 - [分布式事务](./doc/distrans/distrans.md)
 - [页表机制]()
 - [进程切换]()
 - [redis剖析]()
-- [skynet剖析]()
+<!-- 
+- [skynet剖析]() 
 - [muduo剖析]()
+-->
 - [zookeeper]()
 - [kafka]()
 - [常用linux命令]()
@@ -40,6 +41,7 @@
 
 ## 网络编程
 - [unix网络编程](./doc/netprogram/net.md)
+- [IP地址与端口重用&多线程进程下监听同一端口](./doc/netprogram/reuse.md)
 
 ## 设计模式
 - [工厂方法模式](./doc/FactoryMethod/factoryMethod.md)
