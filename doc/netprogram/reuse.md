@@ -160,13 +160,13 @@ void set_nonblocking(int fd) {
     fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 }
 
-void worker_thread(int epoll_fd) {
+void worker_thread(int epoll_fd, int sockfd) {
     struct epoll_event events[MAX_EVENTS];
     while (true) {
         int n = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
         for (int i = 0; i < n; i++) {
             if (events[i].events & EPOLLIN) {
-                if (events[i].data.fd == epoll_fd) {
+                if (events[i].data.fd == sockfd) {
                     // 处理新连接
                     int client_fd = accept(events[i].data.fd, NULL, NULL);
                     if (client_fd == -1) {
@@ -239,7 +239,7 @@ int main() {
     const int num_threads = 4;
     std::vector<std::thread> threads;
     for (int i = 0; i < num_threads; i++) {
-        threads.emplace_back(worker_thread, epoll_fd);
+        threads.emplace_back(worker_thread, epoll_fd, sockfd);
     }
 
     for (auto& t : threads) {
