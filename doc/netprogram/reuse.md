@@ -152,8 +152,8 @@ int main() {
 #include <vector>
 #include <fcntl.h>
 
-#define MAX_EVENTS 10
-#define PORT 8080
+#define MAX_EVENTS 100
+#define PORT 8090
 
 void set_nonblocking(int fd) {
     int flags = fcntl(fd, F_GETFL, 0);
