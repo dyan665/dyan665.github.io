@@ -34,13 +34,24 @@
 # 2. 指针与数组
     如果expr是数组类型（如int arr[10]），则T推导为int*，param的类型是int*（数组退化为指针）。
     如果expr是函数类型（如void func(int)），则T推导为函数指针类型（如void (*)(int)），param的类型是函数指针。
-    
+
+对于 expr 是 const int * const 的情况：
+| 模板参数声明形式 | T 推导类型       | param 类型           |
+|:----------------:|:----------------:|:--------------------:|
+| T param          | const int*       | const int*           |
+| T& param         | const int* const | const int* const&    |
+| T* param         | const int        | const int*           |
+| const T* param   | int              | const int*           |
+| const T& param   | const int*       | const int* const&    |
+  
+
 
 # 总结
-    值类型：const和引用会被忽略，推导出的是去掉const和引用后的类型。
-    引用类型：const会被保留，推导出的是带有const和引用的类型。
-    复杂类型：如struct、指针、数组、函数等，推导规则与基本类型类似，但需要考虑类型本身的复杂性。
-    普通模板类型推导不会将 T 推导为引用类型，引用会被忽略。
+    - 值类型：顶层const和引用会被忽略，推导出的是去掉顶层const和引用后的类型。
+    - 引用类型：顶层const会被保留，推导出的是带有顶层const和引用的类型。
+    - 复杂类型：如struct、指针、数组、函数等，推导规则与基本类型类似，但需要考虑类型本身的复杂性。
+    - 指针传递会忽略指针本身的 const，但保留指向对象的 const。
+    - 普通模板类型推导不会将 T 推导为引用类型，引用会被忽略。
 
 
     T可以被推导为引用类型的情况：
