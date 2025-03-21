@@ -10,6 +10,7 @@
     如果expr是int&，则T推导为int，param的类型是int（引用被忽略）。
     如果expr是int&&，则T推导为int，param的类型是int（引用被忽略）。
     如果expr是const int&，则T推导为int，param的类型是int（const和引用都被忽略）。
+    
 ## 1.2 param是引用类型（pass-by-reference）
     template<typename T>
     void f(T& param);
@@ -18,6 +19,7 @@
     如果expr是int&，则T推导为int，param的类型是int&。
     如果expr是int&&，则推导错误，右值无法绑定左值引用。
     如果expr是const int&，则T推导为const int，param的类型是const int&。
+    
 ## 1.3 param是常量引用类型（pass-by-const-reference）
     template<typename T>
     void f(const T& param);
@@ -26,6 +28,7 @@
     如果expr是int&，则T推导为int，param的类型是const int&。
     如果expr是int&&，则T推导为int，param的类型是const int&，右值能绑定到常量左值引用。
     如果expr是const int&，则T推导为int，param的类型是const int&。
+    
 ## 1.4 万能引用
     template<typename T>
     void f(T&& param);
@@ -38,6 +41,7 @@
     const string s;f(s) //左值 T为const string& param为const string&
     const string* const s;f(s) // 左值 T为const string* const&，param为const string* const
     int&& a =1;f(1) // 注意，右值引用值类型为左值 类型是右值引用 传递的是左值 因此T为int&，param为int&，绑定在左值引用上的是a这个左值
+    
 ## 1.5 const指针
     template<typename T>
     void f(const T* param);
@@ -52,8 +56,10 @@
 
 # 3. 临时对象
     按右值推导即可
+    
 # 4. enum
     按类推导即可
+    
 # 5. 字面量
     比如14、14.0、临时对象，"this is a msg"字符串字面量较为特殊，普通推导退化为const char*指针，引用推导为const char(&)[x]，其它作为右值进行推导。
     
