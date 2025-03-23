@@ -197,13 +197,13 @@ private:
 	
     // 统一调用函数接口
     template<typename Func, typename... Args>
-    vector<char> invokeFunction(Func&& func, const vector<char>& buffer) {
+    vector<char> invokeFunction(Func func, const vector<char>& buffer) {
         // 从缓冲区反序列化参数为tuple
         const char* data = buffer.data();
         auto deserializedParams = deserializeArgs<Args...>(data);
 		    cout<< "invokeFunction: " << get<0>(deserializedParams)<<" "<<get<1>(deserializedParams)<<endl;
         // 调用函数并序列化返回值
-        return serializeResult(forward<Func>(func), deserializedParams);
+        return serializeResult(func, deserializedParams);
     }
 	
 	
@@ -311,7 +311,32 @@ int main() {
     return 0;
 }
 
-
+//serialize number
+//serialize number
+//caller: 97 100 100 0 3 0 0 0 4 0 0 0
+//func name:add
+//3 0 0 0 4 0 0 0
+//invokeFunction: 3 4
+//serialize number
+//Result of add: 7
+//serialize string
+//serialize string
+//caller: 99 111 110 99 97 116 0 2 0 0 0 72 65 1 0 0 0 87
+//func name:concat
+//2 0 0 0 72 65 1 0 0 0 87
+//invokeFunction: HA W
+//HA W
+//serialize string
+//Result of concat: HAW
+//serialize number
+//serialize string
+//caller: 99 111 110 99 97 116 50 0 123 0 0 0 1 0 0 0 87
+//func name:concat2
+//123 0 0 0 1 0 0 0 87
+//invokeFunction: 123 W
+//123 W
+//serialize string
+//Result of concat2: 123_Q_W
 
 ```
 
