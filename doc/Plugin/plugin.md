@@ -73,7 +73,7 @@ public:
         std::lock_guard<std::mutex> lock(mtx);
         
         if (handles.find(pluginName) != handles.end()) {
-            return false; // 已加载
+            return false;
         }
 
         void* handle = dlopen(pluginPath.c_str(), RTLD_LAZY | RTLD_LOCAL);
@@ -98,7 +98,7 @@ public:
 
         handles[pluginName] = ph;
         
-        // 如果监控线程未启动，启动它
+        // 监控线程启动
         if (!monitor_thread.joinable()) {
             startMonitoring();
         }
@@ -236,7 +236,7 @@ private:
                     // 关闭旧插件 但不销毁活跃实例
                     dlclose(it->second.handle);
                     
-                    // 5. 更新插件信息
+                    // 更新插件信息
                     it->second = new_handle_info;
                     
                     std::cout << "Successfully reloaded plugin: " << it->first << std::endl;
@@ -324,7 +324,7 @@ public:
     }
 };
 
-// 导出符号（带可见性控制）
+// 导出符号
 extern "C" {
     PLUGIN_API PluginBase* createPlugin() {
         return new SamplePlugin();
