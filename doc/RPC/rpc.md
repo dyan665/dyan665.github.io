@@ -21,7 +21,7 @@
 
 using namespace std;
 
-// hook number transver function
+// hook number convert function
 uint16_t htons(uint16_t val) {
     return val;
 }
