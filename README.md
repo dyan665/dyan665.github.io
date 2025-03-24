@@ -19,7 +19,7 @@
 - [rest sdk](./doc/rest/rest.md)
 - [插件技术](./doc/Plugin/plugin.md)
 - [RPC实现](./doc/RPC/rpc.md)
-- [基于RPC实现分布式算法]()
+- [基于RPC实现raft算法](./doc/raft/raftimpl.md)
 - [reactor高并发服务器](./doc/reactorServer/reactor.md)
 - [并发模型-mailbox、csp等]()
 - [一致性hash](./doc/conshash/conshash.md)
