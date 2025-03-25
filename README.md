@@ -54,6 +54,8 @@
 - [unique_ptr](./doc/ptr/unique_ptr.md)
 - [shared_ptr](./doc/ptr/shared_ptr.md)
 - [模板基础类型推导](./doc/template/base.md)
+- [函数类型与函数指针间的转换](./doc/template/func&funcptr.md)
+- [模板函数的重载与特化](./doc/template/templateoverload.md)
 - [vector]()
 - [queue]()
 
