@@ -19,11 +19,11 @@
 - [rest sdk](./doc/rest/rest.md)
 - [插件技术](./doc/Plugin/plugin.md)
 - [RPC实现](./doc/RPC/rpc.md)
+- [分布式协议raft](./doc/raft/raft.md)
 - [基于RPC实现raft算法](./doc/raft/raftimpl.md)
 - [reactor高并发服务器](./doc/reactorServer/reactor.md)
 - [并发模型-mailbox、csp等]()
 - [一致性hash](./doc/conshash/conshash.md)
-- [分布式协议raft](./doc/raft/raft.md)
 - [分布式事务](./doc/distrans/distrans.md)
 - [taskflow剖析](./doc/TaskFlow/taskflow.md)
 - [页表机制]()
@@ -34,10 +34,6 @@
 - [常用linux命令]()
 - [git必知会]()
 - [其它]()
-<!-- 
-- [skynet剖析]() 
-- [muduo剖析]()
--->
 
 ## 网络编程
 - [unix网络编程](./doc/netprogram/net.md)
