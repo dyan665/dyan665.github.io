@@ -49,7 +49,7 @@
 ## 推荐系统
 - [双塔模型](./doc/doubletower/doubletower.md)
 - [协同过滤](./doc/cf/cf.md)
-- [ANN-乘积向量](./doc/ANN/chengji.md)
+- [ANN-乘积量化](./doc/ANN/chengji.md)
 - [ANN-暴力搜索](./doc/ANN/baoli.md)
 - [ANN-hnsw](./doc/ANN/hnsw.md)
 - [倒排索引](./doc/index/daopai.md)
