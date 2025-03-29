@@ -51,8 +51,8 @@
 - [协同过滤](./doc/cf/cf.md)
 - [ANN-乘积量化](./doc/ANN/chengji.md)
 - [ANN-暴力搜索](./doc/ANN/baoli.md)
-- [ANN-hnsw](./doc/ANN/hnsw.md)
-- [倒排索引](./doc/index/daopai.md)
+- [ANN-HNSW](./doc/ANN/hnsw.md)
+- [倒排索引IVF](./doc/ANN/IVF.md)
     
 ## C++ & STL
 - [万能引用](./doc/cpp/ref.md)
