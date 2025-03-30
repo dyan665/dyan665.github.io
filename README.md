@@ -53,6 +53,7 @@
 - [ANN-暴力搜索](./doc/ANN/baoli.md)
 - [ANN-HNSW](./doc/ANN/hnsw.md)
 - [倒排索引IVF](./doc/ANN/IVF.md)
+- [ES](./doc/ES/ES.md)
     
 ## C++ & STL
 - [万能引用](./doc/cpp/ref.md)
