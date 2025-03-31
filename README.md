@@ -68,7 +68,7 @@
 - [queue]()
 
 ## mysql
-- [三大范式](./doc/mysql/fanshi.md)
+- [mysql](./doc/mysql/mysql.md)
 
 
 ## nosql
