@@ -74,4 +74,15 @@
 ## nosql
 
 
+## 爬虫
+- [简单清华镜像站软件爬取](./doc/spider/easyexample.md)
+- [requests]()
+- [bs4]()
+- [selemum]()
+- [代理池]()
+- [动态页面逆向]()
+
+
+
+
 
