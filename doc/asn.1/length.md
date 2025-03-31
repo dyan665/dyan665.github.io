@@ -24,7 +24,6 @@ END
 
 ### 编解码
 ```cpp
-
 #include <iostream>
 #include <vector>
 #include <cstdint>
@@ -254,7 +253,7 @@ void testIntegerEncoding() {
         encodeInteger(buffer, tc.value);
 
         if (buffer != tc.expected) {
-            std::cerr << "Test failed for value " << tc.value << ":"<<std::endl;
+            std::cerr << "Test failed for value " << tc.value << ":" << std::endl;
             std::cerr << "Encoded: ";
             for (auto b : buffer) printf("%02X ", b);
             std::cerr << "\nExpected: ";
@@ -268,23 +267,83 @@ void testIntegerEncoding() {
         int32_t decoded = decodeInteger(data);
         if (decoded != tc.value) {
             std::cerr << "Decoding mismatch for value " << tc.value
-                      << ", got " << decoded <<std::endl;
+                      << ", got " << decoded << std::endl;
             throw std::runtime_error("Integer decoding test failed");
         }
     }
-    std::cout << "All integer encoding/decoding tests passed!"<<std::endl;
+    std::cout << "All integer encoding/decoding tests passed!" << std::endl;
+}
+
+void printHex(const std::vector<uint8_t> &data) {
+    for (uint8_t b : data) {
+        printf("%02X ", b);
+    }
+    std::cout << std::endl;
+}
+
+bool testBasic() {
+    BER::Message original{
+        12345,           // messageId
+        1,               // version
+        true,            // isEncrypted
+        {'H', 'e', 'l', 'l', 'o'}  // payload
+    };
+
+    auto encoded = BER::encode(original);
+    std::cout << "Encoded: ";
+    printHex(encoded);
+
+    auto decoded = BER::decode(encoded.data(), encoded.size());
+
+    return decoded.messageId == original.messageId &&
+           decoded.version == original.version &&
+           decoded.isEncrypted == original.isEncrypted &&
+           decoded.payload == original.payload;
+}
+
+bool testEdgeCases() {
+    // 测试边界值
+    BER::Message testCases[] = {
+        {0, 0, false, {}},                     // 最小值
+        {2147483647, 255, true, {0xFF}},      // 最大正数
+        {-2147483648, -128, false, {0x00}},   // 最小负数
+        {123, 1, true, std::vector<uint8_t>(300, 0xAA)}  // 长payload
+    };
+
+    for (const auto& original : testCases) {
+        auto encoded = BER::encode(original);
+        auto decoded = BER::decode(encoded.data(), encoded.size());
+
+        if (!(decoded.messageId == original.messageId &&
+                decoded.version == original.version &&
+                decoded.isEncrypted == original.isEncrypted &&
+                decoded.payload == original.payload)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 int main() {
     try {
         testIntegerEncoding();
-        return 0;
+        std::cout << "Running basic test..." << std::endl;
+        if (!testBasic()) {
+            std::cerr << "Basic test failed!" << std::endl;
+            return 1;
+        }
+
+        std::cout << "Running edge cases test..." << std::endl;
+        if (!testEdgeCases()) {
+            std::cerr << "Edge cases test failed!" << std::endl;
+            return 1;
+        }
+        std::cout << "all test past." << std::endl;
     } catch (const std::exception &e) {
-        std::cerr << "Test failed: " << e.what() <<std::endl;
+        std::cerr << "Test failed: " << e.what() << std::endl;
         return 1;
     }
 }
-
 
 
 ```
