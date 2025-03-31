@@ -80,7 +80,7 @@ namespace BER {
         return length;
     }
 
-    // 修正后的整数编码（符合BER规范）
+    // 整数编码（符合BER规范）
     void encodeInteger(std::vector<uint8_t> &output, int32_t value) {
         std::vector<uint8_t> bytes;
         bool isNegative = value < 0;
@@ -119,7 +119,7 @@ namespace BER {
         output.insert(output.end(), bytes.begin(), bytes.end());
     }
 
-    // 修正后的整数解码
+    // 整数解码
     int32_t decodeInteger(const uint8_t *&data) {
         if (*data++ != INTEGER) throw std::runtime_error("Expected INTEGER tag");
 
