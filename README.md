@@ -25,7 +25,6 @@
 - [reactor高并发服务器](./doc/reactorServer/reactor.md)
 - [并发模型-mailbox、csp等]()
 - [一致性hash](./doc/conshash/conshash.md)
-- [分布式事务](./doc/distrans/distrans.md)
 - [taskflow剖析](./doc/TaskFlow/taskflow.md)
 - [页表机制]()
 - [进程切换]()
@@ -69,7 +68,7 @@
 
 ## mysql
 - [mysql](./doc/mysql/mysql.md)
-
+- [分布式事务](./doc/distrans/distrans.md)
 
 ## nosql
 
