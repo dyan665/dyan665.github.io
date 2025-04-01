@@ -14,7 +14,6 @@
 
 using namespace std; 
 
-// https://blog.csdn.net/pi9nc/article/details/9124623 
 class WM{
 public:
 	WM(vector<string> p):p(p){
