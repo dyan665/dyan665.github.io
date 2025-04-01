@@ -44,7 +44,7 @@ class BM {
 				suffix[i] = i - pidx;
 			}
 			// 1. 部分匹  即倒着匹配，当在某个位置失配时，其中存在子串能与开头开始的串重合，此时
-      //  必须从尾考虑，这样才能优先匹长的子串，失配时尽可能移动少，配合i只递增 
+      			//  必须从尾考虑，这样才能优先匹长的子串，失配时尽可能移动少，配合i只递增 
 			for (int i = 0, j = sz - 1; j > -1; j--) {
 				if (suffix[j] == j + 1) { // 始于首的串 [0,j] 和尾串能够全匹配上
 					while (i < sz - 1 - j) // 倒着匹时0到sz-1-j时失配   [0,j]作为尾串的子串部分匹配
@@ -87,96 +87,5 @@ int main() {
 
 
 
-#include <iostream>
-#include <string>
-#include <vector>
-using namespace std;
 
-#define ASIZE 256 // ASCII字符集大小
-
-// 生成坏字符表
-void generateBC(const string &pattern, vector<int> &bc) {
-	int m = pattern.size();
-	for (int i = 0; i < ASIZE; ++i) {
-		bc[i] = -1; // 初始化为-1
-	}
-	for (int i = 0; i < m; ++i) {
-		bc[pattern[i]] = i; // 记录每个字符在模式串中的最后出现位置
-	}
-}
-
-// 生成好后缀表
-void generateGS(const string &pattern, vector<int> &suffix, vector<bool> &prefix) {
-	int m = pattern.size();
-	suffix.resize(m, -1);
-	prefix.resize(m, false);
-	for (int i = 0; i < m - 1; ++i) {
-		int j = i;
-		int k = 0;
-		while (j >= 0 && pattern[j] == pattern[m - 1 - k]) {
-			--j;
-			++k;//k为匹配上的长度
-			suffix[k] = j + 1;//匹配了k位时，模式串中最右边的位置
-		}
-		if (j == -1) {
-			prefix[k] = true;//全匹配
-		}
-	}
-}
-
-// 获取好后缀移动位数
-int moveByGS(int j, int m, const vector<int> &suffix, const vector<bool> &prefix) {
-	int k = m - 1 - j;// j为当前倒着匹时匹到的index，k也就是当前倒着匹匹到的距离
-	if (suffix[k] != -1) {
-		return j - suffix[k] + 1;
-	}
-	for (int r = j + 2; r <= m - 1; ++r) {
-		if (prefix[m - r]) {
-			return r;
-		}
-	}
-	return m;
-}
-
-// BM算法实现
-int BM(const string &text, const string &pattern) {
-	int n = text.size();
-	int m = pattern.size();
-	vector<int> bc(ASIZE);
-	generateBC(pattern, bc);
-	vector<int> suffix;
-	vector<bool> prefix;
-	generateGS(pattern, suffix, prefix);
-	int i = 0;
-	while (i <= n - m) {
-		int j;
-		for (j = m - 1; j >= 0; --j) {
-			if (pattern[j] != text[i + j]) {
-				break;
-			}
-		}
-		if (j < 0) {
-			return i; // 匹配成功，返回匹配位置
-		}
-		int x = j - bc[text[i + j]];
-		int y = 0;
-		if (j < m - 1) {
-			y = moveByGS(j, m, suffix, prefix);
-		}
-		i += max(x, y);
-	}
-	return -1; // 匹配失败
-}
-
-int main1() {
-	string text = "HERE IS A SIMPLE EXAMPLE";
-	string pattern = "EXAMPLE";
-	int pos = BM(text, pattern);
-	if (pos != -1) {
-		cout << "匹配成功，位置：" << pos << endl;
-	} else {
-		cout << "匹配失败" << endl;
-	}
-	return 0;
-}
 ```
